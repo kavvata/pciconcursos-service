@@ -18,6 +18,137 @@ class LoggingLevel(str, enum.Enum):
     CRITICAL = "CRITICAL"
 
 
+class PciConcursosRegion(str, enum.Enum):
+    TODOS = "*"
+    NACIONAL = "nacional"
+    CE = "CE"
+    SP = "SP"
+    RJ = "RJ"
+    MG = "MG"
+    ES = "ES"
+    PR = "PR"
+    SC = "SC"
+    DF = "DF"
+    GO = "GO"
+    MS = "MS"
+    MT = "MT"
+    AM = "AM"
+    AC = "AC"
+    PA = "PA"
+    RO = "RO"
+    TO = "TO"
+    AL = "AL"
+    BA = "BA"
+    MA = "MA"
+    PB = "PB"
+    PE = "PE"
+    PI = "PI"
+    RN = "RN"
+    SE = "SE"
+
+
+class PciConcursosConfig(BaseModel):
+    link: str = "https://www.pciconcursos.com.br/concursos/"
+    region_config: dict[str, t.Any] = SettingsConfigDict(
+        {
+            "nacional": {"start": "<h2>NACIONAL</h2>", "end": "<h2>REGIÃO SUDESTE</h2>"},
+            "CE": {
+                "start": '<div class="uf">CEARÁ</div>',
+                "end": '<div class="uf">MARANHÃO</div>',
+            },
+            "SP": {
+                "start": '<div class="uf">SÃO PAULO</div>',
+                "end": '<div class="uf">RIO DE JANEIRO</div>',
+            },
+            "RJ": {
+                "start": '<div class="uf">RIO DE JANEIRO</div>',
+                "end": '<div class="uf">MINAS GERAIS</div>',
+            },
+            "MG": {
+                "start": '<div class="uf">MINAS GERAIS</div>',
+                "end": '<div class="uf">ESPÍRITO SANTO</div>',
+            },
+            "ES": {
+                "start": '<div class="uf">ESPÍRITO SANTO</div>',
+                "end": "<h2>REGIÃO SUL</h2>",
+            },
+            "PR": {
+                "start": '<div class="uf">PARANÁ</div>',
+                "end": '<div class="uf">RIO GRANDE DO SUL</div>',
+            },
+            "SC": {
+                "start": '<div class="uf">SANTA CATARINA</div>',
+                "end": "<h2>REGIÃO CENTRO-OESTE</h2>",
+            },
+            "DF": {
+                "start": '<div class="uf">DISTRITO FEDERAL</div>',
+                "end": '<div class="uf">GOIÁS</div>',
+            },
+            "GO": {
+                "start": '<div class="uf">GOIÁS</div>',
+                "end": '<div class="uf">MATO GROSSO DO SUL</div>',
+            },
+            "MS": {
+                "start": '<div class="uf">MATO GROSSO DO SUL</div>',
+                "end": '<div class="uf">MATO GROSSO</div>',
+            },
+            "MT": {
+                "start": '<div class="uf">MATO GROSSO</div>',
+                "end": "<h2>REGIÃO NORTE</h2>",
+            },
+            "AM": {
+                "start": '<div class="uf">AMAZONAS</div>',
+                "end": '<div class="uf">ACRE</div>',
+            },
+            "AC": {"start": '<div class="uf">ACRE</div>', "end": '<div class="uf">PARÁ</div>'},
+            "PA": {
+                "start": '<div class="uf">PARÁ</div>',
+                "end": '<div class="uf">RONDÔNIA</div>',
+            },
+            "RO": {
+                "start": '<div class="uf">RONDÔNIA</div>',
+                "end": '<div class="uf">TOCANTINS</div>',
+            },
+            "TO": {
+                "start": '<div class="uf">TOCANTINS</div>',
+                "end": "<h2>REGIÃO NORDESTE</h2>",
+            },
+            "AL": {
+                "start": '<div class="uf">ALAGOAS</div>',
+                "end": '<div class="uf">BAHIA</div>',
+            },
+            "BA": {
+                "start": '<div class="uf">BAHIA</div>',
+                "end": '<div class="uf">CEARÁ</div>',
+            },
+            "MA": {
+                "start": '<div class="uf">MARANHÃO</div>',
+                "end": '<div class="uf">PARAÍBA</div>',
+            },
+            "PB": {
+                "start": '<div class="uf">PARAÍBA</div>',
+                "end": '<div class="uf">PERNAMBUCO</div>',
+            },
+            "PE": {
+                "start": '<div class="uf">PERNAMBUCO</div>',
+                "end": '<div class="uf">PIAUÍ</div>',
+            },
+            "PI": {
+                "start": '<div class="uf">PIAUÍ</div>',
+                "end": '<div class="uf">RIO GRANDE DO NORTE</div>',
+            },
+            "RN": {
+                "start": '<div class="uf">RIO GRANDE DO NORTE</div>',
+                "end": '<div class="uf">SERGIPE</div>',
+            },
+            "SE": {
+                "start": '<div class="uf">SERGIPE</div>',
+                "end": '<p style="text-align:center; margin:0; padding:10px 0 0 0; font-weight:bold; color:#205c98;">VISITE PERIODICAMENTE - ATUALIZAÇÃO DIÁRIA!!!</p>',
+            },
+        }
+    )
+
+
 class LoggingConfig(BaseModel):
     level: LoggingLevel = Field(description="Logging level for the application")
     format: t.Literal["JSON", "PLAIN"] = Field(
