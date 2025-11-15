@@ -4,9 +4,10 @@ from pydantic import BaseModel
 
 
 class Concurso(BaseModel):
-    id: int
+    id: int | None = None
     nome: str
-    vagas: int
-    salario_max: int
-    inscricao_ate: datetime
+    regiao: str
+    vagas: int | None = None
+    salario_max: int | None = None
+    inscricao_ate: datetime | None = None
     url: str

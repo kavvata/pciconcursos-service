@@ -1,15 +1,18 @@
 import re
+from datetime import datetime
 
 import aiohttp
-import pandas as pd
+import structlog
 from bs4 import BeautifulSoup
 
+from python_service_template.domain.concursos.entity import Concurso
 from python_service_template.domain.concursos.repository import ConcursoClient
 from python_service_template.settings import PciConcursosRegion
 
 
 class PciConcursosClient(ConcursoClient):
     def __init__(self, link: str, region_config: dict) -> None:
+        self.log = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
         self.link = link
         self.region_config = region_config
 
@@ -30,16 +33,7 @@ class PciConcursosClient(ConcursoClient):
             concursos_tag = source_code_str[initial_tag:final_tag]
             soup = BeautifulSoup(concursos_tag, "html.parser")
 
-        combinacao_concursos = [
-            [
-                "Concurso",
-                "Vagas",
-                "Nível",
-                "Salário Até",
-                "Inscrição Até",
-                "Link",
-            ]
-        ]
+        concurso_list: list[Concurso] = []
 
         for line in soup.find_all(class_="ca"):
             name = line.find("a").text.strip()
@@ -51,11 +45,27 @@ class PciConcursosClient(ConcursoClient):
             vagas = "".join(re.findall(r"(\d*) vaga", cd_content))
             nivel = "/".join(re.findall(r"Superior|Médio|Técnico|Fundamental", cd_content))
             salario = "".join(re.findall(r"R\$ *\d*\.*\d*\,*\d*", cd_content))
-            inscricao = "".join(re.findall(r"\d+/\d+/\d+", ce_content))
 
-            combinacao_concursos.append([name, vagas, nivel, salario, inscricao, link])
+            regiao = line.parent.find_previous("div", class_="uf").text
 
-        df = pd.DataFrame(combinacao_concursos)
-        df = df.replace(r"^\s*$", "-", regex=True)
+            inscricoes_list = re.findall(r"\d+/\d+/\d+", ce_content)
 
-        return df.to_csv(index=False)
+            inscricao = inscricoes_list[-1] if len(inscricoes_list) > 1 else "".join(inscricoes_list)
+
+            if salario:
+                salario = "".join(filter(str.isdigit, salario))
+                salario = int(salario)
+
+            concurso_list.append(
+                Concurso(
+                    nome=name,
+                    regiao=regiao,
+                    vagas=int(vagas) if vagas else None,
+                    nivel=nivel,
+                    salario_max=salario or None,
+                    inscricao_ate=datetime.strptime(inscricao, "%d/%m/%Y") if inscricao else None,
+                    url=link,
+                )
+            )
+
+        return concurso_list
