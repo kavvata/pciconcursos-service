@@ -2,8 +2,8 @@ import typing as t
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from python_service_template.dependencies import concurso_service
-from python_service_template.domain.concursos.service import ConcursoService
+from pciconcursos_service.dependencies import concurso_service
+from pciconcursos_service.domain.concursos.service import ConcursoService
 
 router = APIRouter(prefix="/api/v1/concurso")
 

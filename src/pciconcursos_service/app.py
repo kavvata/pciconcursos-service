@@ -9,9 +9,9 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from python_service_template.api.v1.concurso import router as concurso_router
-from python_service_template.dependencies import settings
-from python_service_template.settings import configure_structlog, create_std_logging_config
+from pciconcursos_service.api.v1.concurso import router as concurso_router
+from pciconcursos_service.dependencies import settings
+from pciconcursos_service.settings import configure_structlog, create_std_logging_config
 
 # Centralized settings initialization
 _app_settings = settings()

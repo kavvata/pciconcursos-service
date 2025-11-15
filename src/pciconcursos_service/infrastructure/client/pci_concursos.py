@@ -5,9 +5,9 @@ import aiohttp
 import structlog
 from bs4 import BeautifulSoup
 
-from python_service_template.domain.concursos.entity import Concurso
-from python_service_template.domain.concursos.repository import ConcursoClient
-from python_service_template.settings import PciConcursosRegion
+from pciconcursos_service.domain.concursos.entity import Concurso
+from pciconcursos_service.domain.concursos.repository import ConcursoClient
+from pciconcursos_service.settings import PciConcursosRegion
 
 
 class PciConcursosClient(ConcursoClient):

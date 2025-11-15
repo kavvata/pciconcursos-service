@@ -3,10 +3,10 @@ from functools import lru_cache
 
 from fastapi import Depends
 
-from python_service_template.domain.concursos.repository import ConcursoClient
-from python_service_template.domain.concursos.service import PciConcursosService
-from python_service_template.infrastructure.client.pci_concursos import PciConcursosClient
-from python_service_template.settings import PciConcursosConfig, Settings
+from pciconcursos_service.domain.concursos.repository import ConcursoClient
+from pciconcursos_service.domain.concursos.service import PciConcursosService
+from pciconcursos_service.infrastructure.client.pci_concursos import PciConcursosClient
+from pciconcursos_service.settings import PciConcursosConfig, Settings
 
 
 @lru_cache
