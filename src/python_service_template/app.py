@@ -9,8 +9,7 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from python_service_template.api.health import router as health_router
-from python_service_template.api.v1.coffee import router as coffee_router
+from python_service_template.api.v1.concurso import router as concurso_router
 from python_service_template.dependencies import settings
 from python_service_template.settings import configure_structlog, create_std_logging_config
 
@@ -53,8 +52,7 @@ app.add_middleware(
     generator=lambda: uuid.uuid4().hex,
     validator=None,
 )
-app.include_router(coffee_router)
-app.include_router(health_router)
+app.include_router(concurso_router)
 instrumentator = Instrumentator().instrument(app)
 app.state.instrumentator = instrumentator
 

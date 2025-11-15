@@ -25,16 +25,11 @@ class LoggingConfig(BaseModel):
     )
 
 
-class CoffeeApi(BaseModel):
-    host: str = Field(description="Coffee API host URL")
-
-
 class Settings(BaseSettings):
     host: str = Field(description="Host address to bind the server to")
     port: int = Field(description="Port number to run the server on")
     workers: int = Field(default=1, description="Number of worker processes")
     logging: LoggingConfig = Field(description="Logging configuration settings")
-    coffee_api: CoffeeApi = Field(description="Coffee API configuration")
     app_version: str = Field(default="0.1.0", description="Application version", min_length=1)
     git_commit_sha: str = Field(default="sha", description="Git commit SHA", min_length=1)
 
