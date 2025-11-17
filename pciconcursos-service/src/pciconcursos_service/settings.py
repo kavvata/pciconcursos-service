@@ -155,6 +155,10 @@ class LoggingConfig(BaseModel):
         description="Logging output format - JSON for structured logs or PLAIN for console"
     )
 
+    model_config = SettingsConfigDict(
+        frozen=True,
+    )
+
 
 class Settings(BaseSettings):
     # NOTE: Application: service settings
@@ -177,6 +181,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         env_nested_delimiter="__",
         extra="allow",
+        frozen=True,
     )
 
 
