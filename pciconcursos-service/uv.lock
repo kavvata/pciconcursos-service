@@ -653,7 +653,6 @@ dev = [
     { name = "pytest-aiohttp" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
-    { name = "sqlalchemy-stubs" },
 ]
 
 [package.metadata]
@@ -679,7 +678,6 @@ dev = [
     { name = "pytest-aiohttp", specifier = "~=1.1.0" },
     { name = "pytest-asyncio", specifier = "~=0.26.0" },
     { name = "ruff", specifier = "~=0.11.0" },
-    { name = "sqlalchemy-stubs", specifier = ">=0.4" },
 ]
 
 [[package]]
@@ -1049,19 +1047,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/32/d5/0e66097fc64fa266f29a7963296b40a80d6a997b7ac13806183700676f86/sqlalchemy-2.0.44-cp313-cp313-win32.whl", hash = "sha256:ee51625c2d51f8baadf2829fae817ad0b66b140573939dd69284d2ba3553ae73", size = 2101275, upload-time = "2025-10-10T15:03:26.096Z" },
     { url = "https://files.pythonhosted.org/packages/03/51/665617fe4f8c6450f42a6d8d69243f9420f5677395572c2fe9d21b493b7b/sqlalchemy-2.0.44-cp313-cp313-win_amd64.whl", hash = "sha256:c1c80faaee1a6c3428cecf40d16a2365bcf56c424c92c2b6f0f9ad204b899e9e", size = 2127901, upload-time = "2025-10-10T15:03:27.548Z" },
     { url = "https://files.pythonhosted.org/packages/9c/5e/6a29fa884d9fb7ddadf6b69490a9d45fded3b38541713010dad16b77d015/sqlalchemy-2.0.44-py3-none-any.whl", hash = "sha256:19de7ca1246fbef9f9d1bff8f1ab25641569df226364a0e40457dc5457c54b05", size = 1928718, upload-time = "2025-10-10T15:29:45.32Z" },
-]
-
-[[package]]
-name = "sqlalchemy-stubs"
-version = "0.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "mypy" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/81/60/db082788267740b17eac2c00666bbea1c8c5a94b569e8b1ea76b0cf42d57/sqlalchemy-stubs-0.4.tar.gz", hash = "sha256:c665d6dd4482ef642f01027fa06c3d5e91befabb219dc71fc2a09e7d7695f7ae", size = 70682, upload-time = "2021-01-12T14:02:04.438Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/62/ae/cb215ab25b76228bc90c90444b87e323ffba58c212321a53d5bc92903098/sqlalchemy_stubs-0.4-py3-none-any.whl", hash = "sha256:5eec7aa110adf9b957b631799a72fef396b23ff99fe296df726645d01e312aa5", size = 116067, upload-time = "2021-01-12T14:02:02.723Z" },
 ]
 
 [[package]]
