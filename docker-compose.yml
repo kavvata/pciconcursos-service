@@ -1,6 +1,7 @@
 services:
   pciconcursos-service:
     build: ./pciconcursos-service/
+    command: python /app/src/pciconcursos_service/app.py --reload
     volumes:
       - ./pciconcursos-service/src:/app/src:z
     ports:
