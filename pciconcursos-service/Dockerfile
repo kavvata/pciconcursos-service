@@ -70,4 +70,4 @@ ARG GIT_COMMIT_SHA \
 ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA} \
     APP_VERSION=${APP_VERSION}
 
-CMD python /app/src/python_service_template/app.py
+CMD python /app/src/pciconcursos_service/app.py

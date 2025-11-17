@@ -1,0 +1,9 @@
+services:
+  pciconcursos-service:
+    build: ./pciconcursos-service/
+    volumes:
+      - ./pciconcursos-service/src:/app/src:z
+    ports:
+      - 3000:3000
+    env_file: ./pciconcursos-service/.env
+
