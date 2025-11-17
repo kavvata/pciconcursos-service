@@ -10,11 +10,12 @@ from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from pciconcursos_service.api.v1.concurso import router as concurso_router
-from pciconcursos_service.dependencies import settings
+from pciconcursos_service.dependencies import db_session_manager, settings
 from pciconcursos_service.settings import configure_structlog, create_std_logging_config
 
 # Centralized settings initialization
 _app_settings = settings()
+_db_session_manager = db_session_manager(_app_settings)
 
 
 @asynccontextmanager
@@ -25,6 +26,9 @@ async def lifespan(app: FastAPI):
     app.state.log = structlog.get_logger("app")
     await app.state.log.awarning("Starting application")
     yield
+    if _db_session_manager._engine is not None:
+        _db_session_manager.close()
+
     await app.state.log.awarning("Shutting down application")
 
 
