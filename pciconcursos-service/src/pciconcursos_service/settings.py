@@ -157,12 +157,20 @@ class LoggingConfig(BaseModel):
 
 
 class Settings(BaseSettings):
+    # NOTE: Application: service settings
     host: str = Field(description="Host address to bind the server to")
     port: int = Field(description="Port number to run the server on")
     workers: int = Field(default=1, description="Number of worker processes")
     logging: LoggingConfig = Field(description="Logging configuration settings")
     app_version: str = Field(default="0.1.0", description="Application version", min_length=1)
     git_commit_sha: str = Field(default="sha", description="Git commit SHA", min_length=1)
+
+    # NOTE: Infrastructure: SQL database settings
+    db_host: str = Field(default="db", description="Address to the SQL database host")
+    db_port: str = Field(default="5432", description="Port number to connect to the SQL database")
+    db_name: str = Field(default="concursos", description="SQL Database name")
+    db_user: str = Field(default="app", description="User with proper permission to the SQL database")
+    db_password: str = Field(default="secret", description="Password credential to the SQL database")
 
     model_config = SettingsConfigDict(
         env_file=(".env.default", ".env"),

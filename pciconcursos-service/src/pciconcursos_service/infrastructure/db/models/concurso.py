@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy.orm.base import Mapped
 from sqlalchemy.orm.decl_api import mapped_column
 
-from pciconcursos_service.infrastructure.db.core import BaseORM
+from pciconcursos_service.infrastructure.db.models.core import BaseORM
 
 
 class ConcursoORM(BaseORM):
