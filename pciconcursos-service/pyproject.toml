@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aiohttp~=3.11.0",
+    "alembic>=1.17.2",
     "asgi-correlation-id~=4.3.4",
     "asyncpg>=0.30.0",
     "beautifulsoup4>=4.14.2",
