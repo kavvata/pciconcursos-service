@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from pciconcursos_service.dependencies import settings
 from pciconcursos_service.infrastructure.db import models
+from pciconcursos_service.infrastructure.db.models import *  # noqa: F403
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
