@@ -1,6 +1,11 @@
 services:
   pciconcursos-service:
-    build: ./pciconcursos-service/
+    build: 
+      context:
+        ./pciconcursos-service/
+      args:
+        WWWUSER: ${WWWUSER:-1000}
+        WWWGROUP: ${WWWGROUP:-1000}
     command: python /app/src/pciconcursos_service/app.py --reload
     volumes:
       - ./pciconcursos-service/src:/app/src:z

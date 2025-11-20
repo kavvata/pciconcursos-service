@@ -47,10 +47,14 @@ WORKDIR /app
 # Copy application from builder stage
 COPY --from=builder /app /app
 
+ARG WWWUSER
+ARG WWWGROUP
+
 # Create non-root user for security
-RUN groupadd -r app && \
-    useradd -r -g app app && \
+RUN groupadd -r app -g $WWWGROUP && \
+    useradd -r -g app -u $WWWUSER app && \
     chown -R app:app /app
+
 
 # Configure runtime environment
 ARG PORT=3000
