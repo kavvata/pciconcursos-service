@@ -11,7 +11,8 @@ class ConcursoORM(BaseORM):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str]
-    vagas: Mapped[int]
-    salario_max: Mapped[int]
-    inscricao_ate: Mapped[datetime]
+    regiao: Mapped[str]
+    vagas: Mapped[int | None]
+    salario_max: Mapped[int | None]
+    inscricao_ate: Mapped[datetime | None]
     url: Mapped[str]
