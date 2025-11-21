@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class Concurso(BaseModel):
@@ -11,3 +11,4 @@ class Concurso(BaseModel):
     salario_max: int | None = None
     inscricao_ate: datetime | None = None
     url: str
+    model_config = ConfigDict(from_attributes=True)

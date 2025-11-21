@@ -19,6 +19,11 @@ async def get_concursos_ativos(service: t.Annotated[ConcursoService, Depends(con
     return concursos
 
 
+@router.get("/existing/", response_model=list[Concurso])
+async def get_concursos_registrados(service: t.Annotated[ConcursoService, Depends(concurso_service)]):
+    return await service.get_concursos_registrados()
+
+
 @router.get("/test/")
 async def test_db(session: t.Annotated[AsyncSession, Depends(db_session)]):
     response = (await session.scalars(select(1))).first()
