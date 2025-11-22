@@ -14,8 +14,9 @@ class AsyncConcursoRepository(ConcursoRepository):
         self.session = session
 
     async def add_all(self, items: list[Concurso]) -> list[Concurso]:
-        # NOTE: this filter definitely should be done in the domain layer.
-        # TODO: refactor me!
+        if len(items) < 1:
+            return []
+
         existing_urls = set(
             (
                 await self.session.scalars(
@@ -28,12 +29,12 @@ class AsyncConcursoRepository(ConcursoRepository):
             ).all()
         )
 
-        items = filter(
+        filtered_items = filter(
             lambda c: c.url not in existing_urls,
             items,
         )
 
-        instances_list: list[ConcursoORM] = [ConcursoORM(**c.model_dump()) for c in items]
+        instances_list: list[ConcursoORM] = [ConcursoORM(**c.model_dump()) for c in filtered_items]
 
         if len(instances_list) < 1:
             return []
