@@ -1,12 +1,9 @@
 from abc import ABC, abstractmethod
 
 import structlog
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from pciconcursos_service.domain.concursos.entity import Concurso
-from pciconcursos_service.domain.concursos.repository import ConcursoClient
-from pciconcursos_service.infrastructure.db.models import ConcursoORM
+from pciconcursos_service.domain.concursos.repository import ConcursoClient, ConcursoRepository
 from pciconcursos_service.settings import PciConcursosRegion
 
 
@@ -21,48 +18,14 @@ class ConcursoService(ABC):
 
 
 class PciConcursosService(ConcursoService):
-    def __init__(self, client: ConcursoClient, session: AsyncSession) -> None:
+    def __init__(self, client: ConcursoClient, repository: ConcursoRepository) -> None:
         self.log = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
         self.client = client
-        self.session = session
+        self.repository = repository
 
     async def scrape_concursos(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
         scraped_items: list[Concurso] = await self.client.get_concursos_ativos(region)
-        existing_urls = set(
-            (
-                await self.session.scalars(
-                    select(ConcursoORM.url).where(
-                        ConcursoORM.url.in_(
-                            [c.url for c in scraped_items],
-                        )
-                    )
-                )
-            ).all()
-        )
-
-        new_items = filter(
-            lambda c: c.url not in existing_urls,
-            scraped_items,
-        )
-
-        new_instances_list: list[ConcursoORM] = [ConcursoORM(**c.model_dump()) for c in new_items]
-
-        self.session.add_all(new_instances_list)
-        await self.session.flush()
-
-        new_concursos = [Concurso.model_validate(c) for c in new_instances_list]
-
-        await self.session.commit()
-
-        return new_concursos
+        return await self.repository.add_all(scraped_items)
 
     async def get_concursos(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
-        stmt = select(ConcursoORM)
-        if region != PciConcursosRegion.TODOS:
-            stmt.where(ConcursoORM.regiao == region)
-
-        concursos = await self.session.scalars(
-            stmt.order_by(ConcursoORM.salario_max.desc().nulls_last(), ConcursoORM.inscricao_ate),
-        )
-
-        return [Concurso.model_validate(c) for c in concursos]
+        return await self.repository.get_by_region(region)

@@ -4,8 +4,9 @@ from functools import lru_cache
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from pciconcursos_service.domain.concursos.repository import ConcursoClient
+from pciconcursos_service.domain.concursos.repository import ConcursoClient, ConcursoRepository
 from pciconcursos_service.domain.concursos.service import PciConcursosService
+from pciconcursos_service.infrastructure.client.concurso_repository import AsyncConcursoRepository
 from pciconcursos_service.infrastructure.client.pci_concursos import PciConcursosClient
 from pciconcursos_service.infrastructure.db.core import DatabaseSessionManager
 from pciconcursos_service.settings import PciConcursosConfig, Settings
@@ -32,12 +33,16 @@ def pci_concursos_config() -> PciConcursosConfig:
     return PciConcursosConfig()
 
 
+def concurso_repository(session: t.Annotated[AsyncSession, Depends(db_session)]):
+    return AsyncConcursoRepository(session)
+
+
 def concurso_client(config: t.Annotated[Settings, Depends(pci_concursos_config)]):
     return PciConcursosClient(config.link, config.region_config)
 
 
 def concurso_service(
     client: t.Annotated[ConcursoClient, Depends(concurso_client)],
-    session: t.Annotated[AsyncSession, Depends(db_session)],
+    repository: t.Annotated[ConcursoRepository, Depends(concurso_repository)],
 ):
-    return PciConcursosService(client, session)
+    return PciConcursosService(client, repository)
