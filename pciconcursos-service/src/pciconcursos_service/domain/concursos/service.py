@@ -12,11 +12,11 @@ from pciconcursos_service.settings import PciConcursosRegion
 
 class ConcursoService(ABC):
     @abstractmethod
-    async def get_concursos_ativos(self, region: str) -> list[Concurso]:
+    async def scrape_concursos(self, region: str) -> list[Concurso]:
         pass
 
     @abstractmethod
-    async def get_concursos_registrados(self, region: str) -> list[Concurso]:
+    async def get_concursos(self, region: str) -> list[Concurso]:
         pass
 
 
@@ -26,39 +26,38 @@ class PciConcursosService(ConcursoService):
         self.client = client
         self.session = session
 
-    async def get_concursos_ativos(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
+    async def scrape_concursos(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
         scraped_concursos: list[Concurso] = await self.client.get_concursos_ativos(region)
-        existing_concursos = (
-            await self.session.scalars(
-                select(ConcursoORM).where(
-                    ConcursoORM.url.in_(
-                        [c.url for c in scraped_concursos],
+        existing_urls = set(
+            (
+                await self.session.scalars(
+                    select(ConcursoORM.url).where(
+                        ConcursoORM.url.in_(
+                            [c.url for c in scraped_concursos],
+                        )
                     )
                 )
-            )
-        ).all()
+            ).all()
+        )
 
-        existing_urls = [e.url for e in existing_concursos]
-
-        new_concursos = filter(
+        new_scraped_concursos = filter(
             lambda c: c.url not in existing_urls,
             scraped_concursos,
         )
 
-        for c in new_concursos:
-            self.session.add(
-                ConcursoORM(**c.model_dump()),
-            )
+        new_concursos: list[ConcursoORM] = [ConcursoORM(**c.model_dump()) for c in new_scraped_concursos]
+
+        self.session.add_all(new_concursos)
 
         await self.session.commit()
 
-        return scraped_concursos
+        return [Concurso.model_validate(c) for c in new_concursos]
 
-    async def get_concursos_registrados(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
+    async def get_concursos(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
         stmt = select(ConcursoORM)
         if region != PciConcursosRegion.TODOS:
             stmt.where(ConcursoORM.regiao == region)
 
-        existing_list = await self.session.scalars(stmt.order_by(ConcursoORM.inscricao_ate))
+        concursos = await self.session.scalars(stmt.order_by(ConcursoORM.inscricao_ate))
 
-        return [Concurso.model_validate(c) for c in existing_list]
+        return [Concurso.model_validate(c) for c in concursos]
