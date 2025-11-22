@@ -27,31 +27,34 @@ class PciConcursosService(ConcursoService):
         self.session = session
 
     async def scrape_concursos(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
-        scraped_concursos: list[Concurso] = await self.client.get_concursos_ativos(region)
+        scraped_items: list[Concurso] = await self.client.get_concursos_ativos(region)
         existing_urls = set(
             (
                 await self.session.scalars(
                     select(ConcursoORM.url).where(
                         ConcursoORM.url.in_(
-                            [c.url for c in scraped_concursos],
+                            [c.url for c in scraped_items],
                         )
                     )
                 )
             ).all()
         )
 
-        new_scraped_concursos = filter(
+        new_items = filter(
             lambda c: c.url not in existing_urls,
-            scraped_concursos,
+            scraped_items,
         )
 
-        new_concursos: list[ConcursoORM] = [ConcursoORM(**c.model_dump()) for c in new_scraped_concursos]
+        new_instances_list: list[ConcursoORM] = [ConcursoORM(**c.model_dump()) for c in new_items]
 
-        self.session.add_all(new_concursos)
+        self.session.add_all(new_instances_list)
+        await self.session.flush()
+
+        new_concursos = [Concurso.model_validate(c) for c in new_instances_list]
 
         await self.session.commit()
 
-        return [Concurso.model_validate(c) for c in new_concursos]
+        return new_concursos
 
     async def get_concursos(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
         stmt = select(ConcursoORM)
