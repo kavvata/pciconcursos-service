@@ -26,21 +26,23 @@ class AsyncConcursoRepository(ConcursoRepository):
             ).all()
         )
 
-        new_items = filter(
+        items = filter(
             lambda c: c.url not in existing_urls,
             items,
         )
 
-        new_instances_list: list[ConcursoORM] = [ConcursoORM(**c.model_dump()) for c in new_items]
+        instances_list: list[ConcursoORM] = [ConcursoORM(**c.model_dump()) for c in items]
 
-        self.session.add_all(new_instances_list)
+        if len(instances_list) < 1:
+            return []
+
+        self.session.add_all(instances_list)
         await self.session.flush()
 
-        new_concursos = [Concurso.model_validate(c) for c in new_instances_list]
+        new_concursos_list = [Concurso.model_validate(c) for c in instances_list]
 
         await self.session.commit()
-
-        return new_concursos
+        return new_concursos_list
 
     async def get_by_region(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
         stmt = select(ConcursoORM)
