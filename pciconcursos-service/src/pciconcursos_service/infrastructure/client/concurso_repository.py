@@ -14,6 +14,8 @@ class AsyncConcursoRepository(ConcursoRepository):
         self.session = session
 
     async def add_all(self, items: list[Concurso]) -> list[Concurso]:
+        # NOTE: this filter definitely should be done in the domain layer.
+        # TODO: refactor me!
         existing_urls = set(
             (
                 await self.session.scalars(
