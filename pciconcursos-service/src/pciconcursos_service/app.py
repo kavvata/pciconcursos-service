@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     await app.state.log.awarning("Starting application")
     yield
     if _db_session_manager._engine is not None:
-        _db_session_manager.close()
+        await _db_session_manager.close()
 
     await app.state.log.awarning("Shutting down application")
 
