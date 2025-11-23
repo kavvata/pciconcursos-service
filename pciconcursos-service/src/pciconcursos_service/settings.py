@@ -125,6 +125,13 @@ class Settings(BaseSettings):
     db_user: str = Field(default="app", description="User with proper permission to the SQL database")
     db_password: str = Field(default="secret", description="Password credential to the SQL database")
 
+    # NOTE: Infrastructure: Cache Settings
+    cache_host: str = Field(default="cache_default", description="Address to cache DB host")
+    cache_port: str = Field(default="6379", description="Port for cache DB connection")
+    cache_user: str = Field(default="default", description="User for cache DB authentication")
+    cache_password: str = Field(default="default", description="Password for cache DB authentication")
+    cache_name: str = Field(default="concursos", description="Password for cache DB authentication")
+
     model_config = SettingsConfigDict(
         env_file=(".env.default", ".env"),
         env_file_encoding="utf-8",
