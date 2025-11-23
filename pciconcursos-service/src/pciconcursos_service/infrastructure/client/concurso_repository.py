@@ -52,7 +52,7 @@ class AsyncConcursoRepository(ConcursoRepository):
         if PciConcursosRegion.TODOS not in region_list:
             stmt = stmt.where(
                 ConcursoORM.regiao.in_([r.value for r in region_list]),
-                ConcursoORM.inscricao_ate <= datetime.now(),
+                ConcursoORM.inscricao_ate >= datetime.now(),
             )
 
         concursos = await self.session.scalars(
