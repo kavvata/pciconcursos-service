@@ -2,6 +2,8 @@ import typing as t
 from functools import lru_cache
 
 from fastapi import Depends
+from redis import asyncio as aioredis
+from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pciconcursos_service.domain.concursos.repository import ConcursoClient, ConcursoRepository
@@ -15,6 +17,14 @@ from pciconcursos_service.settings import PciConcursosConfig, Settings
 @lru_cache
 def settings() -> Settings:
     return Settings()
+
+
+@lru_cache
+def cache_client(settings: t.Annotated[Settings, Depends(settings)]):
+    return aioredis.from_url(
+        url=f"redis://{settings.cache_user}:{settings.cache_password}@{settings.cache_host}:{settings.cache_port}/{settings.cache_name}",
+        decode_responses=True,
+    )
 
 
 @lru_cache
@@ -37,8 +47,15 @@ def concurso_repository(session: t.Annotated[AsyncSession, Depends(db_session)])
     return AsyncConcursoRepository(session)
 
 
-def concurso_client(config: t.Annotated[Settings, Depends(pci_concursos_config)]):
-    return PciConcursosClient(config.link, config.region_config)
+def concurso_client(
+    config: t.Annotated[Settings, Depends(pci_concursos_config)],
+    cache: t.Annotated[Redis, Depends(cache_client)],
+):
+    return PciConcursosClient(
+        config.link,
+        config.region_config,
+        cache,
+    )
 
 
 def concurso_service(
