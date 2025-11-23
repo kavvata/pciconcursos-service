@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Python Service Template",
+    title="PCI Concursos scraping API",
     description="Batteries-included starter template for Python backend services",
     version=_app_settings.app_version,
     lifespan=lifespan,
