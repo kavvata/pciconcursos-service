@@ -18,9 +18,9 @@ async def get_concursos(
     return await service.get_concursos(region)
 
 
-@router.get("/scrape/", response_model=list[Concurso])
-async def scrape_concursos(service: t.Annotated[ConcursoService, Depends(concurso_service)]):
+@router.get("/new/", response_model=list[Concurso])
+async def get_new_concursos(service: t.Annotated[ConcursoService, Depends(concurso_service)]):
     concursos = await service.scrape_concursos()
-    if concursos is None:
+    if not concursos:
         raise HTTPException(status_code=204, detail="Nenhum novo concurso encontrado.")
     return concursos
