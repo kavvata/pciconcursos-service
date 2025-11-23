@@ -1,0 +1,264 @@
+{
+  "name": "boletim concursos",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "47d18008-17ef-48e9-a540-3ecb8ed26a9e",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "http://pciconcursos-service:3000/api/v1/concurso/",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "region",
+              "value": "PARANÁ"
+            },
+            {
+              "name": "region",
+              "value": "NACIONAL"
+            }
+          ]
+        },
+        "options": {
+          "queryParameterArrays": "repeat"
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "56f1c812-18fb-4990-b231-9c7715a7fb50",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Você é um assistente do boletim diário de concursos do IFPR. Anuncie as vagas abertas na lista abaixo aos estudantes, em tom de scrita de narrativa. Certifique-se que o nome do concurso possui um hyperlink em markdown para a url da página. Separe por regiões em headings de nivel 3 (###). Seja levemente sucinto e informativo.\n{{ $json.concursoListJsonString }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "efcb8073-4abe-4504-a56f-57eb10b97aa0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        912,
+        208
+      ],
+      "id": "826a9a44-e58c-4939-b164-54ba25e06d77",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9h4Uc9dRgiroxm6H",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $today }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        416
+      ],
+      "id": "02471841-4215-4bdf-a5b5-8377edddbad9",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "DOnqD9QJWiDERUfe",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keys": {
+          "key": [
+            {
+              "currentKey": "salario_max",
+              "newKey": "salario_max_em_centavos"
+            }
+          ]
+        },
+        "additionalOptions": {}
+      },
+      "type": "n8n-nodes-base.renameKeys",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ],
+      "id": "feff9211-3f98-4d9d-a70c-45bcea2d8976",
+      "name": "Rename Keys"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "={{ $json.message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        0
+      ],
+      "id": "401d895c-4232-469a-add9-0adc492202fa",
+      "name": "Discord",
+      "webhookId": "6230ec0e-b90b-4b28-a425-c19e640e2bda",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "2MfpbD8b5IyDIwVT",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function chunkSentences(sentences, maxLen = 2000) {\n  const chunks = [];\n  let current = \"\";\n\n  for (const sentence of sentences) {\n    // If adding this sentence would overflow, start a new chunk\n    if ((current + sentence).length > maxLen) {\n      if (current) chunks.push(current.trim());\n      current = sentence;\n    } else {\n      current += sentence;\n    }\n  }\n\n  if (current) chunks.push(current.trim());\n  return chunks;\n}\n\nconst fullText = $input.first().json.output\nconst seg = new Intl.Segmenter('pt-BR', { granularity: 'sentence' })\nlet splitByTopic = fullText.split('###').filter(t => t).map(t => t.startsWith(' ') ? '###' + t : t)\n\nsplitByTopic = splitByTopic.join('').split('\\n\\n---')\n\nlet some = Array.from(seg.segment(splitByTopic.join('')), s => s.segment)\nlet foo = chunkSentences(some)\nreturn foo.map(t => ({message: t}))"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        0
+      ],
+      "id": "c109bfcb-9b3d-4cd3-8658-0153b9fbf93a",
+      "name": "split into topics"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {concursoListJsonString: JSON.stringify($input.all())};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        0
+      ],
+      "id": "25b2d404-ba99-451a-a645-17355853587f",
+      "name": "stringify results"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Rename Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        []
+      ]
+    },
+    "Rename Keys": {
+      "main": [
+        [
+          {
+            "node": "stringify results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "split into topics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split into topics": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "stringify results": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4b3cf9a5-b651-4f06-8e21-585891837b80",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2b202adf3325233acaa873af39aa11dad467719d816766a03c0b49cda4ac46"
+  },
+  "id": "NOffR38o72cGcqTT",
+  "tags": []
+}
