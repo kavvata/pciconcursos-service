@@ -14,6 +14,7 @@ services:
     env_file: ./pciconcursos-service/.env
     depends_on:
       - db
+      - redis
   db:
     image: postgres:16
     volumes:
@@ -40,7 +41,7 @@ services:
       WEBHOOK_URL: http://n8n:5678
       N8N_HOST: n8n
       GENERIC_TIMEZONE: America/Sao_Paulo
-      N8N_LOG_LEVEL: debug
+      N8N_LOG_LEVEL: ${N8N_LOG_LEVEL}
       N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE: true
     volumes:
       - n8n_data:/home/node/.n8n
