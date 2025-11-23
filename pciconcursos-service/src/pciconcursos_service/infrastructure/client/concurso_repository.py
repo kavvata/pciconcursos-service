@@ -47,10 +47,13 @@ class AsyncConcursoRepository(ConcursoRepository):
         await self.session.commit()
         return new_concursos_list
 
-    async def get_by_region(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
+    async def get_by_region(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
         stmt = select(ConcursoORM)
-        if region != PciConcursosRegion.TODOS:
-            stmt.where(ConcursoORM.regiao == region, ConcursoORM.inscricao_ate <= datetime.now())
+        if PciConcursosRegion.TODOS not in region_list:
+            stmt = stmt.where(
+                ConcursoORM.regiao.in_([r.value for r in region_list]),
+                ConcursoORM.inscricao_ate <= datetime.now(),
+            )
 
         concursos = await self.session.scalars(
             stmt.order_by(ConcursoORM.salario_max.desc().nulls_last(), ConcursoORM.inscricao_ate),

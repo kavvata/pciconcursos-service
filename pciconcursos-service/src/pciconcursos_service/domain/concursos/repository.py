@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from pciconcursos_service.domain.concursos.entity import Concurso
+from pciconcursos_service.settings import PciConcursosRegion
 
 
 class ConcursoClient(ABC):
@@ -15,5 +16,5 @@ class ConcursoRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_region(self, region: str) -> list[Concurso]:
+    async def get_by_region(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
         pass
