@@ -13,9 +13,9 @@ router = APIRouter(prefix="/api/v1/concurso")
 @router.get("/", response_model=list[Concurso])
 async def get_concursos(
     service: t.Annotated[ConcursoService, Depends(concurso_service)],
-    region_list: list[PciConcursosRegion] | None = Query([], description="List of regions to filter by"),  # noqa: B008
+    region: list[PciConcursosRegion] | None = Query([], description="Optionally set one or more regions to filter by"),  # noqa: B008
 ):
-    return await service.get_concursos(region_list)
+    return await service.get_concursos(region)
 
 
 @router.get("/scrape/", response_model=list[Concurso])
