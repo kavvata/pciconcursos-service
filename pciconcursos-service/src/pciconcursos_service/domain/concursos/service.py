@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
+from datetime import date
 
 import structlog
 
 from pciconcursos_service.domain.concursos.entity import Concurso
-from pciconcursos_service.domain.concursos.repository import ConcursoClient, ConcursoRepository
+from pciconcursos_service.domain.concursos.repository import ConcursoCache, ConcursoClient, ConcursoRepository
 from pciconcursos_service.settings import PciConcursosRegion
 
 
@@ -18,13 +19,24 @@ class ConcursoService(ABC):
 
 
 class PciConcursosService(ConcursoService):
-    def __init__(self, client: ConcursoClient, repository: ConcursoRepository) -> None:
+    def __init__(self, client: ConcursoClient, repository: ConcursoRepository, cache: ConcursoCache) -> None:
         self.log = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
         self.client = client
         self.repository = repository
+        self.cache = cache
 
     async def scrape_concursos(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
-        scraped_items: list[Concurso] = await self.client.get_concursos_ativos(region)
+        cache_key = f"scraped_items:{str(date.today()).replace('-', '')}"
+        scraped_items = await self.cache.get(cache_key)
+
+        if not scraped_items:
+            scraped_items: list[Concurso] = await self.client.get_concursos_ativos(region)
+            await self.cache.set(
+                cache_key,
+                scraped_items,
+                ex=60 * 60 * 24,  # 24 hours
+            )
+
         return await self.repository.add_all(scraped_items)
 
     async def get_concursos(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:

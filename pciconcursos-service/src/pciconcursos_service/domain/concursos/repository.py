@@ -10,6 +10,16 @@ class ConcursoClient(ABC):
         pass
 
 
+class ConcursoCache(ABC):
+    @abstractmethod
+    async def get(self, key: str) -> list[Concurso]:
+        pass
+
+    @abstractmethod
+    async def set(self, key: str, value: list[Concurso], ex: int | None = None) -> list[Concurso]:
+        pass
+
+
 class ConcursoRepository(ABC):
     @abstractmethod
     async def add_all(self, items: list[Concurso]) -> list[Concurso]:

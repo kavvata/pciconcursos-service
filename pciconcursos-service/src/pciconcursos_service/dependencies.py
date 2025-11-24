@@ -10,6 +10,7 @@ from pciconcursos_service.domain.concursos.repository import ConcursoClient, Con
 from pciconcursos_service.domain.concursos.service import PciConcursosService
 from pciconcursos_service.infrastructure.client.concurso_repository import AsyncConcursoRepository
 from pciconcursos_service.infrastructure.client.pci_concursos import PciConcursosClient
+from pciconcursos_service.infrastructure.client.redis_cache import RedisConcursoCache
 from pciconcursos_service.infrastructure.db.core import DatabaseSessionManager
 from pciconcursos_service.settings import PciConcursosConfig, Settings
 
@@ -21,10 +22,11 @@ def settings() -> Settings:
 
 @lru_cache
 def cache_client(settings: t.Annotated[Settings, Depends(settings)]):
-    return aioredis.from_url(
+    redis_client = aioredis.from_url(
         url=f"redis://{settings.cache_user}:{settings.cache_password}@{settings.cache_host}:{settings.cache_port}/{settings.cache_name}",
         decode_responses=True,
     )
+    return RedisConcursoCache(redis_client)
 
 
 @lru_cache
@@ -49,17 +51,13 @@ def concurso_repository(session: t.Annotated[AsyncSession, Depends(db_session)])
 
 def concurso_client(
     config: t.Annotated[Settings, Depends(pci_concursos_config)],
-    cache: t.Annotated[Redis, Depends(cache_client)],
 ):
-    return PciConcursosClient(
-        config.link,
-        config.region_config,
-        cache,
-    )
+    return PciConcursosClient(config.link, config.region_config)
 
 
 def concurso_service(
     client: t.Annotated[ConcursoClient, Depends(concurso_client)],
     repository: t.Annotated[ConcursoRepository, Depends(concurso_repository)],
+    cache: t.Annotated[ConcursoRepository, Depends(cache_client)],
 ):
-    return PciConcursosService(client, repository)
+    return PciConcursosService(client, repository, cache)
