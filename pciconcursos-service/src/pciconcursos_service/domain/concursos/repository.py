@@ -22,7 +22,7 @@ class ConcursoCache(ABC):
 
 class ConcursoRepository(ABC):
     @abstractmethod
-    async def add_all(self, items: list[Concurso]) -> list[Concurso]:
+    async def add_new(self, items: list[Concurso]) -> list[Concurso]:
         pass
 
     @abstractmethod

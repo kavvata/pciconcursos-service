@@ -38,7 +38,7 @@ class PciConcursosService(ConcursoService):
                 ex=60 * 60 * 24,  # 24 hours
             )
 
-        return await self.repository.add_all(scraped_items)
+        return await self.repository.add_new(scraped_items)
 
     async def get_concursos(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
         if not region_list:

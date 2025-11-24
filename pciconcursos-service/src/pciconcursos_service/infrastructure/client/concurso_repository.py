@@ -13,7 +13,7 @@ class AsyncConcursoRepository(ConcursoRepository):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def add_all(self, items: list[Concurso]) -> list[Concurso]:
+    async def add_new(self, items: list[Concurso]) -> list[Concurso]:
         if len(items) < 1:
             return []
 
