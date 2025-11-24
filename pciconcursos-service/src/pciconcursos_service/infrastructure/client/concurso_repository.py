@@ -56,7 +56,11 @@ class AsyncConcursoRepository(ConcursoRepository):
             )
 
         concursos = await self.session.scalars(
-            stmt.order_by(ConcursoORM.salario_max.desc().nulls_last(), ConcursoORM.inscricao_ate),
+            stmt.order_by(
+                ConcursoORM.regiao,
+                ConcursoORM.salario_max.desc().nulls_last(),
+                ConcursoORM.inscricao_ate,
+            ),
         )
 
         return [Concurso.model_validate(c) for c in concursos]
