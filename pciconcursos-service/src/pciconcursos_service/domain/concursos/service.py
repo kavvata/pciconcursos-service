@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import date
+from hashlib import md5
 
 import structlog
 
@@ -40,6 +41,17 @@ class PciConcursosService(ConcursoService):
         return await self.repository.add_all(scraped_items)
 
     async def get_concursos(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
-        if not len(region_list):
+        if not region_list:
             region_list = [PciConcursosRegion.TODOS]
-        return await self.repository.get_by_region(region_list)
+
+        region_values = ",".join([r.value for r in region_list])
+        hashed_regions = md5(region_values.encode()).hexdigest()
+        cache_key = f"concursos:{hashed_regions}"
+
+        concursos = await self.cache.get(cache_key)
+        if concursos is not None:
+            return concursos
+
+        concursos = await self.repository.get_by_region(region_list)
+        await self.cache.set(cache_key, concursos, ex=60 * 5)
+        return concursos
