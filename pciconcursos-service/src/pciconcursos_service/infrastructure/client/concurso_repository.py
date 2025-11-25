@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
+import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +12,7 @@ from pciconcursos_service.settings import PciConcursosRegion
 
 class AsyncConcursoRepository(ConcursoRepository):
     def __init__(self, session: AsyncSession) -> None:
+        self.log = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
         self.session = session
 
     async def add_new(self, items: list[Concurso]) -> list[Concurso]:
@@ -48,11 +50,33 @@ class AsyncConcursoRepository(ConcursoRepository):
         return new_concursos_list
 
     async def get_by_region(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
-        stmt = select(ConcursoORM)
+        stmt = select(ConcursoORM).where(
+            ConcursoORM.inscricao_ate >= datetime.now(),
+        )
         if PciConcursosRegion.TODOS not in region_list:
             stmt = stmt.where(
                 ConcursoORM.regiao.in_([r.value for r in region_list]),
-                ConcursoORM.inscricao_ate >= datetime.now(),
+            )
+
+        concursos = await self.session.scalars(
+            stmt.order_by(
+                ConcursoORM.regiao,
+                ConcursoORM.salario_max.desc().nulls_last(),
+                ConcursoORM.inscricao_ate,
+            ),
+        )
+
+        return [Concurso.model_validate(c) for c in concursos]
+
+    async def get_added_today(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
+        now = datetime.now()
+        stmt = select(ConcursoORM).where(
+            ConcursoORM.inscricao_ate >= now,
+            ConcursoORM.created_at >= now.replace(hour=0, minute=0, second=0, microsecond=0),
+        )
+        if PciConcursosRegion.TODOS not in region_list:
+            stmt = stmt.where(
+                ConcursoORM.regiao.in_([r.value for r in region_list]),
             )
 
         concursos = await self.session.scalars(
