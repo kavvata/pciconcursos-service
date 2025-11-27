@@ -4,6 +4,7 @@ from datetime import datetime
 import aiohttp
 import structlog
 from bs4 import BeautifulSoup
+from structlog.stdlib import BoundLogger
 
 from pciconcursos_service.domain.concursos.entity import Concurso
 from pciconcursos_service.domain.concursos.repository import ConcursoClient
@@ -12,7 +13,7 @@ from pciconcursos_service.settings import PciConcursosRegion
 
 class PciConcursosClient(ConcursoClient):
     def __init__(self, link: str, region_config: dict) -> None:
-        self.log = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
+        self.log: BoundLogger = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
         self.link = link
         self.region_config = region_config
 

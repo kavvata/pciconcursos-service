@@ -3,6 +3,7 @@ from datetime import date
 from hashlib import md5
 
 import structlog
+from structlog.stdlib import BoundLogger
 
 from pciconcursos_service.domain.concursos.entity import Concurso
 from pciconcursos_service.domain.concursos.repository import ConcursoCache, ConcursoClient, ConcursoRepository
@@ -25,7 +26,7 @@ class ConcursoService(ABC):
 
 class PciConcursosService(ConcursoService):
     def __init__(self, client: ConcursoClient, repository: ConcursoRepository, cache: ConcursoCache) -> None:
-        self.log = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
+        self.log: BoundLogger = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
         self.client = client
         self.repository = repository
         self.cache = cache
