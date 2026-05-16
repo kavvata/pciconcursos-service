@@ -1,5 +1,7 @@
+import structlog
 from pydantic import TypeAdapter
 from redis.asyncio.client import Redis
+from structlog.stdlib import BoundLogger
 
 from pciconcursos_service.domain.concursos.entity import Concurso
 from pciconcursos_service.domain.concursos.repository import ConcursoCache
@@ -7,6 +9,7 @@ from pciconcursos_service.domain.concursos.repository import ConcursoCache
 
 class RedisConcursoCache(ConcursoCache):
     def __init__(self, client: Redis) -> None:
+        self.log: BoundLogger = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
         self.client = client
         self.adapter = TypeAdapter(list[Concurso])
 
@@ -16,6 +19,9 @@ class RedisConcursoCache(ConcursoCache):
         if not json_str:
             return None
 
+        return None
+
+        await self.log.ainfo("cache hit")
         return self.adapter.validate_json(json_str)
 
     async def set(

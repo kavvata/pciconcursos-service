@@ -17,6 +17,50 @@ class PciConcursosClient(ConcursoClient):
         self.link = link
         self.region_config = region_config
 
+    async def build_entities_from_soup(self, soup: BeautifulSoup) -> list[Concurso]:
+        concurso_list: list[Concurso] = []
+
+        for line in soup.find_all(class_="ca"):
+            name = line.find("a").text.strip()
+            link = line.find("a", href=True)["href"]
+
+            cd_soup: Tag = line.find(class_="cd")
+            ce_soup = line.find(class_="ce")
+            cd_content = str(cd_soup)
+            ce_content = str(ce_soup)
+
+            cd_span = cd_soup.find("span")
+            area_str, nivel_str = list(cd_span._all_strings())[:2]
+
+            vagas = "".join(re.findall(r"(\d*) vaga", cd_content))
+            nivel = "/".join([a.strip() for a in nivel_str.split("-")])
+            salario = "".join(re.findall(r"R\$ *\d*\.*\d*\,*\d*", cd_content))
+            area_atuacao = "/".join([a.strip() for a in area_str.split(",") if a])
+
+            regiao = line.parent.find_previous("div", class_="uf").text
+
+            inscricoes_list = re.findall(r"\d+/\d+/\d+", ce_content)
+
+            inscricao = inscricoes_list[-1] if len(inscricoes_list) > 1 else "".join(inscricoes_list)
+
+            if salario:
+                salario = "".join(filter(str.isdigit, salario))
+                salario = int(salario)
+
+            concurso_list.append(
+                Concurso(
+                    nome=name,
+                    regiao=regiao,
+                    vagas=int(vagas) if vagas else None,
+                    area_atuacao=area_atuacao,
+                    nivel=nivel,
+                    salario_max=salario or None,
+                    inscricao_ate=datetime.strptime(inscricao, "%d/%m/%Y") if inscricao else None,
+                    url=link,
+                )
+            )
+        return concurso_list
+
     async def get_concursos_ativos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
         async with aiohttp.ClientSession() as session:
             async with session.get(self.link) as response:
@@ -26,48 +70,9 @@ class PciConcursosClient(ConcursoClient):
             region_list = [PciConcursosRegion.TODOS]
 
         if len(region_list) == 1 and region_list[0] == PciConcursosRegion.TODOS:
-            concurso_list: list[Concurso] = []
+            return await self.build_entities_from_soup(soup)
 
-            for line in soup.find_all(class_="ca"):
-                name = line.find("a").text.strip()
-                link = line.find("a", href=True)["href"]
-
-                cd_soup: Tag = line.find(class_="cd")
-                ce_soup = line.find(class_="ce")
-                cd_content = str(cd_soup)
-                ce_content = str(ce_soup)
-
-                cd_span = cd_soup.find("span")
-                area_str, nivel_str = list(cd_span._all_strings())[:2]
-
-                vagas = "".join(re.findall(r"(\d*) vaga", cd_content))
-                nivel = "/".join([a.strip() for a in nivel_str.split("-")])
-                salario = "".join(re.findall(r"R\$ *\d*\.*\d*\,*\d*", cd_content))
-                area_atuacao = "/".join([a.strip() for a in area_str.split(",") if a])
-
-                regiao = line.parent.find_previous("div", class_="uf").text
-
-                inscricoes_list = re.findall(r"\d+/\d+/\d+", ce_content)
-
-                inscricao = inscricoes_list[-1] if len(inscricoes_list) > 1 else "".join(inscricoes_list)
-
-                if salario:
-                    salario = "".join(filter(str.isdigit, salario))
-                    salario = int(salario)
-
-                concurso_list.append(
-                    Concurso(
-                        nome=name,
-                        regiao=regiao,
-                        vagas=int(vagas) if vagas else None,
-                        area_atuacao=area_atuacao,
-                        nivel=nivel,
-                        salario_max=salario or None,
-                        inscricao_ate=datetime.strptime(inscricao, "%d/%m/%Y") if inscricao else None,
-                        url=link,
-                    )
-                )
-            return concurso_list
+        concurso_list = []
 
         for region in region_list:
             region_soup = soup
@@ -83,46 +88,6 @@ class PciConcursosClient(ConcursoClient):
                 concursos_tag = source_code_str[initial_tag:final_tag]
                 region_soup = BeautifulSoup(concursos_tag, "html.parser")
 
-            concurso_list: list[Concurso] = []
-
-            for line in region_soup.find_all(class_="ca"):
-                name = line.find("a").text.strip()
-                link = line.find("a", href=True)["href"]
-
-                cd_soup: Tag = line.find(class_="cd")
-                ce_soup = line.find(class_="ce")
-                cd_content = str(cd_soup)
-                ce_content = str(ce_soup)
-
-                cd_span = cd_soup.find("span")
-                area_str, nivel_str = list(cd_span._all_strings())[:2]
-
-                vagas = "".join(re.findall(r"(\d*) vaga", cd_content))
-                nivel = "/".join([a.strip() for a in nivel_str.split("-")])
-                salario = "".join(re.findall(r"R\$ *\d*\.*\d*\,*\d*", cd_content))
-                area_atuacao = "/".join([a.strip() for a in area_str.split(",") if a])
-
-                regiao = line.parent.find_previous("div", class_="uf").text
-
-                inscricoes_list = re.findall(r"\d+/\d+/\d+", ce_content)
-
-                inscricao = inscricoes_list[-1] if len(inscricoes_list) > 1 else "".join(inscricoes_list)
-
-                if salario:
-                    salario = "".join(filter(str.isdigit, salario))
-                    salario = int(salario)
-
-                concurso_list.append(
-                    Concurso(
-                        nome=name,
-                        regiao=regiao,
-                        vagas=int(vagas) if vagas else None,
-                        area_atuacao=area_atuacao,
-                        nivel=nivel,
-                        salario_max=salario or None,
-                        inscricao_ate=datetime.strptime(inscricao, "%d/%m/%Y") if inscricao else None,
-                        url=link,
-                    )
-                )
+            concurso_list += await self.build_entities_from_soup(region_soup)
 
         return concurso_list
