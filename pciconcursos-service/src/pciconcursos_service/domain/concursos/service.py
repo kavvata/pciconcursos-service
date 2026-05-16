@@ -1,5 +1,3 @@
-from attr import has
-import typing as t
 from abc import ABC, abstractmethod
 from datetime import date
 from hashlib import md5
@@ -22,7 +20,7 @@ class ConcursoService(ABC):
         pass
 
     @abstractmethod
-    async def get_new_concursos(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
+    async def get_new_concursos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
         pass
 
 
@@ -53,7 +51,7 @@ class PciConcursosService(ConcursoService):
 
         return await self.repository.add_new(scraped_items)
 
-    async def get_concursos(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
+    async def get_concursos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
         if not region_list:
             region_list = [PciConcursosRegion.TODOS]
 
@@ -69,7 +67,7 @@ class PciConcursosService(ConcursoService):
         await self.cache.set(cache_key, concursos, ex=60 * 5)
         return concursos
 
-    async def get_new_concursos(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
+    async def get_new_concursos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
         if not region_list:
             region_list = [PciConcursosRegion.TODOS]
 
@@ -78,7 +76,7 @@ class PciConcursosService(ConcursoService):
         cache_key = f"new:concursos:{hashed_regions}"
 
         concursos = await self.cache.get(cache_key)
-        if concursos is not None:
+        if concursos:
             return concursos
 
         concursos = await self.repository.get_added_today(region_list)
