@@ -21,15 +21,23 @@ class PciConcursosClient(ConcursoClient):
         concurso_list: list[Concurso] = []
 
         for line in soup.find_all(class_="ca"):
-            name = line.find("a").text.strip()
-            link = line.find("a", href=True)["href"]
+            name_anchor = line.find("a", href=True)
 
-            cd_soup: Tag = line.find(class_="cd")
+            assert name_anchor
+
+            name = name_anchor.text.strip()
+            link = name_anchor.get("href")
+
+            cd_soup = line.find(class_="cd")
+
+            assert cd_soup
+
             ce_soup = line.find(class_="ce")
             cd_content = str(cd_soup)
             ce_content = str(ce_soup)
 
             cd_span = cd_soup.find("span")
+            assert cd_span
             area_str, nivel_str = list(cd_span._all_strings())[:2]
 
             vagas = "".join(re.findall(r"(\d*) vaga", cd_content))
@@ -37,7 +45,14 @@ class PciConcursosClient(ConcursoClient):
             salario = "".join(re.findall(r"R\$ *\d*\.*\d*\,*\d*", cd_content))
             area_atuacao = "/".join([a.strip() for a in area_str.split(",") if a])
 
-            regiao = line.parent.find_previous("div", class_="uf").text
+            parent = line.parent
+            assert parent
+
+            regiao_soup = parent.find_previous("div", class_="uf")
+
+            assert regiao_soup
+
+            regiao = regiao_soup.text
 
             inscricoes_list = re.findall(r"\d+/\d+/\d+", ce_content)
 
@@ -56,7 +71,7 @@ class PciConcursosClient(ConcursoClient):
                     nivel=nivel,
                     salario_max=salario or None,
                     inscricao_ate=datetime.strptime(inscricao, "%d/%m/%Y") if inscricao else None,
-                    url=link,
+                    url=str(link),
                 )
             )
         return concurso_list
@@ -72,7 +87,7 @@ class PciConcursosClient(ConcursoClient):
         if len(region_list) == 1 and region_list[0] == PciConcursosRegion.TODOS:
             return await self.build_entities_from_soup(soup)
 
-        concurso_list = []
+        concurso_list: list[Concurso] = []
 
         for region in region_list:
             region_soup = soup
