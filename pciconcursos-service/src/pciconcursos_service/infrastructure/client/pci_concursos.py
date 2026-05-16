@@ -43,9 +43,7 @@ class PciConcursosClient(ConcursoClient):
                 vagas = "".join(re.findall(r"(\d*) vaga", cd_content))
                 nivel = "/".join([a.strip() for a in nivel_str.split("-")])
                 salario = "".join(re.findall(r"R\$ *\d*\.*\d*\,*\d*", cd_content))
-                area_atuacao_list = [a.strip() for a in area_str.split(",") if a]
-
-                await self.log.ainfo("found list", area_list=area_atuacao_list, nivel=nivel)
+                area_atuacao = "/".join([a.strip() for a in area_str.split(",") if a])
 
                 regiao = line.parent.find_previous("div", class_="uf").text
 
@@ -62,7 +60,7 @@ class PciConcursosClient(ConcursoClient):
                         nome=name,
                         regiao=regiao,
                         vagas=int(vagas) if vagas else None,
-                        area_atuacao=area_atuacao_list,
+                        area_atuacao=area_atuacao,
                         nivel=nivel,
                         salario_max=salario or None,
                         inscricao_ate=datetime.strptime(inscricao, "%d/%m/%Y") if inscricao else None,
@@ -102,9 +100,7 @@ class PciConcursosClient(ConcursoClient):
                 vagas = "".join(re.findall(r"(\d*) vaga", cd_content))
                 nivel = "/".join([a.strip() for a in nivel_str.split("-")])
                 salario = "".join(re.findall(r"R\$ *\d*\.*\d*\,*\d*", cd_content))
-                area_atuacao_list = [a.strip() for a in area_str.split(",") if a]
-
-                await self.log.ainfo("found list", area_list=area_atuacao_list, nivel=nivel)
+                area_atuacao = "/".join([a.strip() for a in area_str.split(",") if a])
 
                 regiao = line.parent.find_previous("div", class_="uf").text
 
@@ -121,7 +117,7 @@ class PciConcursosClient(ConcursoClient):
                         nome=name,
                         regiao=regiao,
                         vagas=int(vagas) if vagas else None,
-                        area_atuacao=area_atuacao_list,
+                        area_atuacao=area_atuacao,
                         nivel=nivel,
                         salario_max=salario or None,
                         inscricao_ate=datetime.strptime(inscricao, "%d/%m/%Y") if inscricao else None,

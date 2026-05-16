@@ -18,7 +18,7 @@ class ConcursoService(ABC):
         pass
 
     @abstractmethod
-    async def get_concursos(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
+    async def get_concursos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
         pass
 
     @abstractmethod

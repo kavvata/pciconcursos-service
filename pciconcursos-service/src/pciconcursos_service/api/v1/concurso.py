@@ -15,7 +15,7 @@ async def get_concursos(
     service: t.Annotated[ConcursoService, Depends(concurso_service)],
     region: list[PciConcursosRegion] | None = Query([], description="Optionally set one or more regions to filter by"),  # noqa: B008
 ):
-    return await service.get_concursos(region)
+    return await service.get_concursos(region or [PciConcursosRegion.TODOS])
 
 
 @router.get("/scrape/", response_model=list[Concurso])

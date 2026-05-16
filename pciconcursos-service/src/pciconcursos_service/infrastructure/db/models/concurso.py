@@ -47,6 +47,8 @@ class ConcursoORM(BaseORM):
     salario_max: Mapped[int | None]
     inscricao_ate: Mapped[datetime | None]
     url: Mapped[str]
+    nivel: Mapped[str]
+    area_atuacao: Mapped[str]
     areas_atuacao: Mapped[list["AreaAtuacaoORM"]] = relationship(
         "AreaAtuacaoORM",
         secondary="concurso_area_atuacao",
