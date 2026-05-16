@@ -3,7 +3,7 @@ from datetime import datetime
 
 import aiohttp
 import structlog
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 from structlog.stdlib import BoundLogger
 
 from pciconcursos_service.domain.concursos.entity import Concurso
@@ -17,7 +17,17 @@ class PciConcursosClient(ConcursoClient):
         self.link = link
         self.region_config = region_config
 
-    async def build_entities_from_soup(self, soup: BeautifulSoup) -> list[Concurso]:
+    async def get_possible_areas_from_concurso_link(self, link: str) -> str:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(link) as response:
+                soup = BeautifulSoup(await response.text(), "html.parser")
+
+        article_soup = soup.find(attrs={"itemprop": "articleBody"})
+        if article_soup:
+            items = [li.get_text(strip=True) for ul in article_soup.find_all("ul") for li in ul.find_all("li")]
+        return "/".join(items)
+
+    async def _build_entities_from_soup(self, soup: BeautifulSoup) -> list[Concurso]:
         concurso_list: list[Concurso] = []
 
         for line in soup.find_all(class_="ca"):
@@ -44,6 +54,9 @@ class PciConcursosClient(ConcursoClient):
             nivel = "/".join([a.strip() for a in nivel_str.split("-")])
             salario = "".join(re.findall(r"R\$ *\d*\.*\d*\,*\d*", cd_content))
             area_atuacao = "/".join([a.strip() for a in area_str.split(",") if a])
+
+            if area_atuacao == "Vários Cargos":
+                area_atuacao = await self.get_possible_areas_from_concurso_link(str(link))
 
             parent = line.parent
             assert parent
@@ -85,7 +98,7 @@ class PciConcursosClient(ConcursoClient):
             region_list = [PciConcursosRegion.TODOS]
 
         if len(region_list) == 1 and region_list[0] == PciConcursosRegion.TODOS:
-            return await self.build_entities_from_soup(soup)
+            return await self._build_entities_from_soup(soup)
 
         concurso_list: list[Concurso] = []
 
@@ -103,6 +116,6 @@ class PciConcursosClient(ConcursoClient):
                 concursos_tag = source_code_str[initial_tag:final_tag]
                 region_soup = BeautifulSoup(concursos_tag, "html.parser")
 
-            concurso_list += await self.build_entities_from_soup(region_soup)
+            concurso_list += await self._build_entities_from_soup(region_soup)
 
         return concurso_list
