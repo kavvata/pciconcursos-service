@@ -1,3 +1,5 @@
+from attr import has
+import typing as t
 from abc import ABC, abstractmethod
 from datetime import date
 from hashlib import md5
@@ -12,7 +14,7 @@ from pciconcursos_service.settings import PciConcursosRegion
 
 class ConcursoService(ABC):
     @abstractmethod
-    async def scrape_concursos(self, region: str) -> list[Concurso]:
+    async def scrape_concursos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
         pass
 
     @abstractmethod
@@ -31,12 +33,18 @@ class PciConcursosService(ConcursoService):
         self.repository = repository
         self.cache = cache
 
-    async def scrape_concursos(self, region: str = PciConcursosRegion.TODOS) -> list[Concurso]:
-        cache_key = f"scraped_items:{str(date.today()).replace('-', '')}"
+    async def scrape_concursos(self, region_list: list[PciConcursosRegion] | None = None) -> list[Concurso]:
+        if not region_list:
+            region_list = [PciConcursosRegion.TODOS]
+
+        region_values = ",".join([r.value for r in region_list])
+
+        hashed_regions = md5(region_values.encode()).hexdigest()
+        cache_key = f"scraped_items:{str(date.today()).replace('-', '')}:{hashed_regions}"
         scraped_items = await self.cache.get(cache_key)
 
         if not scraped_items:
-            scraped_items: list[Concurso] = await self.client.get_concursos_ativos(region)
+            scraped_items: list[Concurso] = await self.client.get_concursos_ativos(region_list)
             await self.cache.set(
                 cache_key,
                 scraped_items,
@@ -54,7 +62,7 @@ class PciConcursosService(ConcursoService):
         cache_key = f"concursos:{hashed_regions}"
 
         concursos = await self.cache.get(cache_key)
-        if concursos is not None:
+        if concursos:
             return concursos
 
         concursos = await self.repository.get_by_region(region_list)

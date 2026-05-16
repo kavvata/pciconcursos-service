@@ -11,4 +11,6 @@ class Concurso(BaseModel):
     salario_max: int | None = None
     inscricao_ate: datetime | None = None
     url: str
+    nivel: list[str]
+    area_atuacao: list[str]
     model_config = ConfigDict(from_attributes=True)

@@ -6,7 +6,7 @@ from pciconcursos_service.settings import PciConcursosRegion
 
 class ConcursoClient(ABC):
     @abstractmethod
-    async def get_concursos_ativos(self) -> list[Concurso]:
+    async def get_concursos_ativos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
         pass
 
 
