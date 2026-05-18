@@ -6,7 +6,7 @@ import structlog
 from bs4 import BeautifulSoup
 from structlog.stdlib import BoundLogger
 
-from pciconcursos_service.domain.concursos.entity import Concurso
+from pciconcursos_service.domain.concursos.entity import AreaAtuacao, Concurso, NivelEscolaridade
 from pciconcursos_service.domain.concursos.repository import ConcursoClient
 from pciconcursos_service.settings import PciConcursosRegion
 
@@ -17,15 +17,21 @@ class PciConcursosClient(ConcursoClient):
         self.link = link
         self.region_config = region_config
 
-    async def get_possible_areas_from_concurso_link(self, link: str) -> str:
+    async def get_possible_areas_from_concurso_link(self, link: str):
         async with aiohttp.ClientSession() as session:
             async with session.get(link) as response:
                 soup = BeautifulSoup(await response.text(), "html.parser")
 
         article_soup = soup.find(attrs={"itemprop": "articleBody"})
-        if article_soup:
-            items = [li.get_text(strip=True) for ul in article_soup.find_all("ul") for li in ul.find_all("li")]
-        return "/".join(items)
+
+        if not article_soup:
+            return []
+
+        return [
+            re.sub(r"\s*\(.*\)\s*$", "", li.get_text(strip=True)).strip()
+            for ul in article_soup.find_all("ul")
+            for li in ul.find_all("li")
+        ]
 
     async def _build_entities_from_soup(self, soup: BeautifulSoup) -> list[Concurso]:
         concurso_list: list[Concurso] = []
@@ -51,12 +57,12 @@ class PciConcursosClient(ConcursoClient):
             area_str, nivel_str = list(cd_span._all_strings())[:2]
 
             vagas = "".join(re.findall(r"(\d*) vaga", cd_content))
-            nivel = "/".join([a.strip() for a in nivel_str.split("-")])
+            nivel_list = [a.strip() for a in re.split(r"[-/]+", nivel_str) if a.strip()]
+            area_atuacao_list = [a.strip() for a in area_str.split(",") if a]
             salario = "".join(re.findall(r"R\$ *\d*\.*\d*\,*\d*", cd_content))
-            area_atuacao = "/".join([a.strip() for a in area_str.split(",") if a])
 
-            if area_atuacao == "Vários Cargos":
-                area_atuacao = await self.get_possible_areas_from_concurso_link(str(link))
+            if "Vários Cargos" in area_atuacao_list:
+                area_atuacao_list = await self.get_possible_areas_from_concurso_link(str(link))
 
             parent = line.parent
             assert parent
@@ -80,8 +86,8 @@ class PciConcursosClient(ConcursoClient):
                     nome=name,
                     regiao=regiao,
                     vagas=int(vagas) if vagas else None,
-                    area_atuacao=area_atuacao,
-                    nivel=nivel,
+                    niveis_escolaridade=[NivelEscolaridade(descricao=n) for n in nivel_list],
+                    areas_atuacao=[AreaAtuacao(descricao=a) for a in area_atuacao_list],
                     salario_max=salario or None,
                     inscricao_ate=datetime.strptime(inscricao, "%d/%m/%Y") if inscricao else None,
                     url=str(link),
