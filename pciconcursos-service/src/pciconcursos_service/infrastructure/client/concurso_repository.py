@@ -1,3 +1,4 @@
+from sqlalchemy.sql import or_
 from datetime import datetime
 
 import structlog
@@ -5,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from pciconcursos_service.domain.concursos.entity import Concurso, AreaAtuacao
+from pciconcursos_service.domain.concursos.entity import Concurso
 from pciconcursos_service.domain.concursos.repository import ConcursoRepository
 from pciconcursos_service.infrastructure.db.models.concurso import (
     AreaAtuacaoORM,
@@ -103,7 +104,7 @@ class AsyncConcursoRepository(ConcursoRepository):
         return new_concursos_list
 
     async def get(
-        self, region_list: list[PciConcursosRegion] | None, area_atuacao_q: str | None, nome_q: str | None
+        self, region_list: list[PciConcursosRegion] | None, area_atuacao_list: list[str], nome_q: str | None
     ) -> list[Concurso]:
         stmt = select(ConcursoORM).where(
             ConcursoORM.inscricao_ate >= datetime.now(),
@@ -114,10 +115,13 @@ class AsyncConcursoRepository(ConcursoRepository):
                     ConcursoORM.regiao.in_([r.value for r in region_list]),
                 )
 
-        if area_atuacao_q:
+        if area_atuacao_list:
+            areas_conditions = or_(
+                *[ConcursoORM.areas_atuacao.any(AreaAtuacaoORM.descricao.ilike(f"%{a}%")) for a in area_atuacao_list]
+            )
             stmt = stmt.where(
                 ConcursoORM.areas_atuacao.any(
-                    AreaAtuacaoORM.descricao.ilike(f"%{area_atuacao_q}%"),
+                    areas_conditions,
                 ),
             )
 
