@@ -17,7 +17,7 @@ class ConcursoService(ABC):
 
     @abstractmethod
     async def get_concursos(
-        self, region_list: list[PciConcursosRegion] | None, area_atuacao_q: str | None
+        self, region_list: list[PciConcursosRegion] | None, area_atuacao_q: str | None, nome_q: str | None
     ) -> list[Concurso]:
         pass
 
@@ -54,21 +54,21 @@ class PciConcursosService(ConcursoService):
         return await self.repository.add_new(scraped_items)
 
     async def get_concursos(
-        self, region_list: list[PciConcursosRegion] | None, area_atuacao_q: str | None
+        self, region_list: list[PciConcursosRegion] | None, area_atuacao_q: str | None, nome_q: str | None
     ) -> list[Concurso]:
         if not region_list:
             region_list = [PciConcursosRegion.TODOS]
 
         region_values = ",".join([r.value for r in region_list])
         hashed_regions = md5(region_values.encode()).hexdigest()
-        cache_key = f"concursos:{hashed_regions}:{area_atuacao_q}"
+        cache_key = f"concursos:{hashed_regions}:{area_atuacao_q}:{nome_q}"
 
         # concursos = await self.cache.get(cache_key)
         concursos = None
         if concursos:
             return concursos
 
-        concursos = await self.repository.get(region_list, area_atuacao_q)
+        concursos = await self.repository.get(region_list, area_atuacao_q, nome_q)
         await self.cache.set(cache_key, concursos, ex=60 * 5)
         return concursos
 

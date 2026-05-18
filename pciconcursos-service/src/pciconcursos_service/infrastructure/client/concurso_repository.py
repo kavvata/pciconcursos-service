@@ -49,7 +49,7 @@ class AsyncConcursoRepository(ConcursoRepository):
         await self.session.commit()
         return new_concursos_list
 
-    async def get(self, region_list: list[PciConcursosRegion] | None, area_atuacao_q: str | None) -> list[Concurso]:
+    async def get(self, region_list: list[PciConcursosRegion] | None, area_atuacao_q: str | None, nome_q: str | None) -> list[Concurso]:
         stmt = select(ConcursoORM).where(
             ConcursoORM.inscricao_ate >= datetime.now(),
         )
@@ -62,6 +62,11 @@ class AsyncConcursoRepository(ConcursoRepository):
         if area_atuacao_q:
             stmt = stmt.where(
                 ConcursoORM.area_atuacao.ilike(f"%{area_atuacao_q}%"),
+            )
+
+        if nome_q:
+            stmt = stmt.where(
+                ConcursoORM.nome.ilike(f"%{nome_q}%"),
             )
 
         concursos = await self.session.scalars(

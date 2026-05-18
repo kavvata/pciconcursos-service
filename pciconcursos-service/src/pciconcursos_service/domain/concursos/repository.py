@@ -26,7 +26,7 @@ class ConcursoRepository(ABC):
         pass
 
     @abstractmethod
-    async def get(self, region_list: list[PciConcursosRegion] | None, area_atuacao_q: str | None) -> list[Concurso]:
+    async def get(self, region_list: list[PciConcursosRegion] | None, area_atuacao_q: str | None, nome_q: str | None) -> list[Concurso]:
         pass
 
     @abstractmethod
