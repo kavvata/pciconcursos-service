@@ -3,6 +3,20 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 
+class AreaAtuacao(BaseModel):
+    id: int | None = None
+    descricao: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NivelEscolaridade(BaseModel):
+    id: int | None = None
+    descricao: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class Concurso(BaseModel):
     id: int | None = None
     nome: str
@@ -11,6 +25,7 @@ class Concurso(BaseModel):
     salario_max: int | None = None
     inscricao_ate: datetime | None = None
     url: str
-    nivel: str
-    area_atuacao: str
+    niveis_escolaridade: list[NivelEscolaridade]
+    areas_atuacao: list[AreaAtuacao]
+
     model_config = ConfigDict(from_attributes=True)

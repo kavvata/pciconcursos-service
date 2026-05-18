@@ -24,6 +24,23 @@ concurso_area_atuacao_association: Table = Table(
     ),
 )
 
+concurso_nivel_escolaridade_association: Table = Table(
+    "concurso_nivel_escolaridade",
+    BaseORM.metadata,
+    Column(
+        "nivel_escolaridade_id",
+        Integer,
+        ForeignKey("nivel_escolaridade.id"),
+        primary_key=True,
+    ),
+    Column(
+        "concurso_id",
+        Integer,
+        ForeignKey("concurso.id"),
+        primary_key=True,
+    ),
+)
+
 
 class AreaAtuacaoORM(BaseORM):
     __tablename__ = "area_atuacao"
@@ -37,6 +54,17 @@ class AreaAtuacaoORM(BaseORM):
     )
 
 
+class NivelEscolaridadeORM(BaseORM):
+    __tablename__ = "nivel_escolaridade"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    descricao: Mapped[str]
+    concursos: Mapped[list["ConcursoORM"]] = relationship(
+        "ConcursoORM",
+        secondary="concurso_nivel_escolaridade",
+        back_populates="niveis_escolaridade",
+    )
+
+
 class ConcursoORM(BaseORM):
     __tablename__ = "concurso"
 
@@ -47,10 +75,13 @@ class ConcursoORM(BaseORM):
     salario_max: Mapped[int | None]
     inscricao_ate: Mapped[datetime | None]
     url: Mapped[str]
-    nivel: Mapped[str]
-    area_atuacao: Mapped[str]
     areas_atuacao: Mapped[list["AreaAtuacaoORM"]] = relationship(
         "AreaAtuacaoORM",
         secondary="concurso_area_atuacao",
+        back_populates="concursos",
+    )
+    niveis_escolaridade: Mapped[list["NivelEscolaridadeORM"]] = relationship(
+        "NivelEscolaridadeORM",
+        secondary="concurso_nivel_escolaridade",
         back_populates="concursos",
     )
