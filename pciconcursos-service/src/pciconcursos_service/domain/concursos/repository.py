@@ -26,6 +26,10 @@ class ConcursoRepository(ABC):
         pass
 
     @abstractmethod
+    async def update_all(self, items: list[Concurso]):
+        pass
+
+    @abstractmethod
     async def get(
         self, region_list: list[PciConcursosRegion] | None, area_atuacao_list: list[str], nome_q: str | None
     ) -> list[Concurso]:
