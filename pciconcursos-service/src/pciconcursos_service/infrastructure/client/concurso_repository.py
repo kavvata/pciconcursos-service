@@ -1,12 +1,12 @@
 from datetime import datetime
 
 import structlog
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import or_
 
-from pciconcursos_service.domain.concursos.entity import Concurso, NivelEscolaridade
+from pciconcursos_service.domain.concursos.entity import Concurso
 from pciconcursos_service.domain.concursos.repository import ConcursoRepository
 from pciconcursos_service.infrastructure.db.models.concurso import (
     AreaAtuacaoORM,
@@ -143,6 +143,11 @@ class AsyncConcursoRepository(ConcursoRepository):
             if not orm:
                 continue
 
+            orm.nome = c.nome
+            orm.regiao = c.regiao
+            orm.inscricao_ate = c.inscricao_ate
+            orm.edital_pdf_url = c.edital_pdf_url
+
             orm.areas_atuacao = []
             for a in c.areas_atuacao:
                 area = existing_areas.get(a.descricao)
@@ -163,20 +168,32 @@ class AsyncConcursoRepository(ConcursoRepository):
 
             instances_list.append(orm)
 
-        self.session.add_all(instances_list)
-        await self.session.flush()
-
-        new_concursos_list = [Concurso.model_validate(c) for c in instances_list]
+        updated_instances = [Concurso.model_validate(c) for c in instances_list]
 
         await self.session.commit()
-        return new_concursos_list
+        return updated_instances
 
     async def get(
-        self, region_list: list[PciConcursosRegion] | None, area_atuacao_list: list[str], nome_q: str | None
+        self,
+        region_list: list[PciConcursosRegion] | None = None,
+        area_atuacao_list: list[str] | None = None,
+        nome_q: str | None = None,
+        id: int | None = None,
     ) -> list[Concurso]:
         stmt = select(ConcursoORM).where(
             ConcursoORM.inscricao_ate >= datetime.now(),
         )
+
+        if id:
+            stmt = stmt.where(ConcursoORM.id == id)
+            concursos = await self.session.scalars(
+                stmt.options(
+                    selectinload(ConcursoORM.niveis_escolaridade),
+                    selectinload(ConcursoORM.areas_atuacao),
+                )
+            )
+            return [Concurso.model_validate(c) for c in concursos]
+
         if region_list:
             if PciConcursosRegion.TODOS not in region_list:
                 stmt = stmt.where(

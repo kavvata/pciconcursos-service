@@ -17,7 +17,7 @@ class PciConcursosClient(ConcursoClient):
         self.link = link
         self.region_config = region_config
 
-    async def get_possible_areas_from_concurso_link(self, link: str):
+    async def get_possible_areas_from_concurso_link(self, link: str) -> list[str]:
         async with aiohttp.ClientSession() as session:
             async with session.get(link) as response:
                 soup = BeautifulSoup(await response.text(), "html.parser")
@@ -33,6 +33,19 @@ class PciConcursosClient(ConcursoClient):
             for li in ul.find_all("li")
         ]
 
+    async def _get_edital_pdf_url_from_link(self, link: str) -> str | None:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(link) as response:
+                html = await response.text()
+        soup = BeautifulSoup(html, "html.parser")
+        for li in soup.find_all("li", class_="pdf"):
+            a_tag = li.find("a", title=re.compile(r"edital", re.I))
+            if a_tag and a_tag.get("href"):
+                href = str(a_tag.get("href") or "")
+                if str(href).lower().endswith(".pdf"):
+                    return href
+        return None
+
     async def _build_entities_from_soup(self, soup: BeautifulSoup) -> list[Concurso]:
         concurso_list: list[Concurso] = []
 
@@ -43,6 +56,8 @@ class PciConcursosClient(ConcursoClient):
 
             name = name_anchor.text.strip()
             link = name_anchor.get("href")
+
+            edital_pdf_url = await self._get_edital_pdf_url_from_link(str(link))
 
             cd_soup = line.find(class_="cd")
 
@@ -91,6 +106,7 @@ class PciConcursosClient(ConcursoClient):
                     salario_max=salario or None,
                     inscricao_ate=datetime.strptime(inscricao, "%d/%m/%Y") if inscricao else None,
                     url=str(link),
+                    edital_pdf_url=edital_pdf_url,
                 )
             )
         return concurso_list
@@ -125,3 +141,11 @@ class PciConcursosClient(ConcursoClient):
             concurso_list += await self._build_entities_from_soup(region_soup)
 
         return concurso_list
+
+    async def scrape_detail_page(self, concurso: Concurso) -> Concurso:
+        edital_url = await self._get_edital_pdf_url_from_link(concurso.url)
+
+        if edital_url:
+            concurso.edital_pdf_url = edital_url
+
+        return concurso
