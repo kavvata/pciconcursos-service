@@ -9,6 +9,10 @@ class ConcursoClient(ABC):
     async def get_concursos_ativos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
         pass
 
+    @abstractmethod
+    async def scrape_detail_page(self, concurso: Concurso) -> Concurso:
+        pass
+
 
 class ConcursoCache(ABC):
     @abstractmethod
@@ -26,12 +30,16 @@ class ConcursoRepository(ABC):
         pass
 
     @abstractmethod
-    async def update_all(self, items: list[Concurso]):
+    async def update_all(self, items: list[Concurso]) -> list[Concurso]:
         pass
 
     @abstractmethod
     async def get(
-        self, region_list: list[PciConcursosRegion] | None, area_atuacao_list: list[str], nome_q: str | None
+        self,
+        region_list: list[PciConcursosRegion] | None = None,
+        area_atuacao_list: list[str] | None = None,
+        nome_q: str | None = None,
+        id: int | None = None,
     ) -> list[Concurso]:
         pass
 

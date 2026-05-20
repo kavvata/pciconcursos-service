@@ -1,3 +1,4 @@
+from sqlalchemy import update
 from abc import ABC, abstractmethod
 from datetime import date
 from hashlib import md5
@@ -22,7 +23,19 @@ class ConcursoService(ABC):
         pass
 
     @abstractmethod
+    async def get_concurso_by_id(self, id: int) -> Concurso | None:
+        pass
+
+    @abstractmethod
     async def get_new_concursos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
+        pass
+
+    @abstractmethod
+    async def re_scrape_concursos(self):
+        pass
+
+    @abstractmethod
+    async def re_scrape_concurso(self, concurso: Concurso):
         pass
 
 
@@ -78,6 +91,11 @@ class PciConcursosService(ConcursoService):
         await self.cache.set(cache_key, concursos, ex=60 * 5)
         return concursos
 
+    async def get_concurso_by_id(self, id: int) -> Concurso | None:
+        list_found = await self.repository.get(id=id)
+        assert len(list_found) == 1
+        return list_found[0]
+
     async def get_new_concursos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
         if not region_list:
             region_list = [PciConcursosRegion.TODOS]
@@ -93,3 +111,22 @@ class PciConcursosService(ConcursoService):
         concursos = await self.repository.get_added_today(region_list)
         await self.cache.set(cache_key, concursos, ex=60 * 5)
         return concursos
+
+    async def re_scrape_concursos(self) -> list[Concurso]:
+        region_list = [PciConcursosRegion.TODOS]
+
+        scraped_items = await self.client.get_concursos_ativos(region_list)
+
+        return await self.repository.update_all(scraped_items)
+
+    async def re_scrape_concurso(self, concurso: Concurso):
+        scraped_detail = await self.client.scrape_detail_page(concurso)
+
+        if not scraped_detail:
+            return None
+
+        updated = await self.repository.update_all([scraped_detail])
+
+        assert len(updated) == 1
+
+        return updated[0]

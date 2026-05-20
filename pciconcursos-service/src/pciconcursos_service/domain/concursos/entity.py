@@ -25,6 +25,7 @@ class Concurso(BaseModel):
     salario_max: int | None = None
     inscricao_ate: datetime | None = None
     url: str
+    edital_pdf_url: str | None = None
     niveis_escolaridade: list[NivelEscolaridade]
     areas_atuacao: list[AreaAtuacao]
 
