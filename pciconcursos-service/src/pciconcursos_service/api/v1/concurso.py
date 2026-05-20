@@ -40,3 +40,25 @@ async def get_new_concursos(
     if not concursos:
         raise HTTPException(status_code=204, detail="Nenhum novo concurso encontrado.")
     return concursos
+
+
+@router.get("/rescrape/", response_model=list[Concurso])
+async def re_scrape_concursos(
+    service: t.Annotated[ConcursoService, Depends(concurso_service)],
+):
+    return await service.re_scrape_concursos()
+
+
+@router.get("/rescrape/{concurso_id}", response_model=Concurso)
+async def re_scrape_concurso(service: t.Annotated[ConcursoService, Depends(concurso_service)], concurso_id: int):
+    concurso = await service.get_concurso_by_id(concurso_id)
+
+    if not concurso:
+        raise HTTPException(status_code=404, detail="Not found.")
+
+    updated = await service.re_scrape_concurso(concurso)
+
+    if not updated:
+        raise HTTPException(status_code=204, detail="No update needed.")
+
+    return updated
