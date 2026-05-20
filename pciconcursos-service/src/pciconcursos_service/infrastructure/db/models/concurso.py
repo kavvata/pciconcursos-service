@@ -85,3 +85,4 @@ class ConcursoORM(BaseORM):
         secondary="concurso_nivel_escolaridade",
         back_populates="concursos",
     )
+    edital_pdf_url: Mapped[str | None]
