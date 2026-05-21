@@ -50,3 +50,9 @@ class ConcursoRepository(ABC):
     @abstractmethod
     async def get_added_today(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
         pass
+
+
+class PDFClient(ABC):
+    @abstractmethod
+    async def pdf_url_to_md(self, pdf_url: str):
+        pass
