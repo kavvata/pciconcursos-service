@@ -3,13 +3,18 @@ from functools import lru_cache
 
 from fastapi import Depends
 from redis import asyncio as aioredis
-from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from pciconcursos_service.domain.concursos.repository import ConcursoClient, ConcursoRepository
+from pciconcursos_service.domain.concursos.repository import (
+    ConcursoClient,
+    ConcursoRepository,
+    ConcursoCache,
+    PDFClient,
+)
 from pciconcursos_service.domain.concursos.service import PciConcursosService
 from pciconcursos_service.infrastructure.client.concurso_repository import AsyncConcursoRepository
 from pciconcursos_service.infrastructure.client.pci_concursos import PciConcursosClient
+from pciconcursos_service.infrastructure.client.pymupdfllm_client import PyMuPDFClient
 from pciconcursos_service.infrastructure.client.redis_cache import RedisConcursoCache
 from pciconcursos_service.infrastructure.db.core import DatabaseSessionManager
 from pciconcursos_service.settings import PciConcursosConfig, Settings
@@ -49,6 +54,10 @@ def concurso_repository(session: t.Annotated[AsyncSession, Depends(db_session)])
     return AsyncConcursoRepository(session)
 
 
+def pdf_client():
+    return PyMuPDFClient()
+
+
 def concurso_client(
     config: t.Annotated[Settings, Depends(pci_concursos_config)],
 ):
@@ -58,6 +67,7 @@ def concurso_client(
 def concurso_service(
     client: t.Annotated[ConcursoClient, Depends(concurso_client)],
     repository: t.Annotated[ConcursoRepository, Depends(concurso_repository)],
-    cache: t.Annotated[ConcursoRepository, Depends(cache_client)],
+    cache: t.Annotated[ConcursoCache, Depends(cache_client)],
+    pdf_client: t.Annotated[PDFClient, Depends(pdf_client)],
 ):
-    return PciConcursosService(client, repository, cache)
+    return PciConcursosService(client, repository, cache, pdf_client)

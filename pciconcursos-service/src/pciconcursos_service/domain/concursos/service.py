@@ -1,4 +1,3 @@
-from sqlalchemy import update
 from abc import ABC, abstractmethod
 from datetime import date
 from hashlib import md5
@@ -7,7 +6,12 @@ import structlog
 from structlog.stdlib import BoundLogger
 
 from pciconcursos_service.domain.concursos.entity import Concurso
-from pciconcursos_service.domain.concursos.repository import ConcursoCache, ConcursoClient, ConcursoRepository
+from pciconcursos_service.domain.concursos.repository import (
+    ConcursoCache,
+    ConcursoClient,
+    ConcursoRepository,
+    PDFClient,
+)
 from pciconcursos_service.settings import PciConcursosRegion
 
 
@@ -40,11 +44,18 @@ class ConcursoService(ABC):
 
 
 class PciConcursosService(ConcursoService):
-    def __init__(self, client: ConcursoClient, repository: ConcursoRepository, cache: ConcursoCache) -> None:
+    def __init__(
+        self,
+        client: ConcursoClient,
+        repository: ConcursoRepository,
+        cache: ConcursoCache,
+        pdf_client: PDFClient,
+    ) -> None:
         self.log: BoundLogger = structlog.get_logger(__name__).bind(class_name=self.__class__.__name__)
         self.client = client
         self.repository = repository
         self.cache = cache
+        self.pdf_client = pdf_client
 
     async def scrape_concursos(self, region_list: list[PciConcursosRegion] | None = None) -> list[Concurso]:
         if not region_list:
@@ -84,6 +95,7 @@ class PciConcursosService(ConcursoService):
 
         # concursos = await self.cache.get(cache_key)
         concursos = None
+
         if concursos:
             return concursos
 
