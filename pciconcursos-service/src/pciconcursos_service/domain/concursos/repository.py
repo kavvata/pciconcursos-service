@@ -48,7 +48,12 @@ class ConcursoRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_added_today(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
+    async def get_added_today(
+        self,
+        region_list: list[PciConcursosRegion],
+        area_atuacao_list: list[str],
+        nome_q: str,
+    ) -> list[Concurso]:
         pass
 
 

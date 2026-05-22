@@ -250,21 +250,43 @@ class AsyncConcursoRepository(ConcursoRepository):
 
         return [Concurso.model_validate(c) for c in concursos]
 
-    async def get_added_today(self, region_list: list[PciConcursosRegion]) -> list[Concurso]:
+    async def get_added_today(
+        self,
+        region_list: list[PciConcursosRegion],
+        area_atuacao_list: list[str],
+        nome_q: str,
+    ) -> list[Concurso]:
         now = datetime.now()
         stmt = select(ConcursoORM).where(
             ConcursoORM.inscricao_ate >= now,
             ConcursoORM.created_at >= now.replace(hour=0, minute=0, second=0, microsecond=0),
         )
-        if PciConcursosRegion.TODOS not in region_list:
+
+        if region_list:
+            if PciConcursosRegion.TODOS not in region_list:
+                stmt = stmt.where(
+                    ConcursoORM.regiao.in_([r.value for r in region_list]),
+                )
+
+        if area_atuacao_list:
+            areas_conditions = or_(
+                *[ConcursoORM.areas_atuacao.any(AreaAtuacaoORM.descricao.ilike(f"%{a}%")) for a in area_atuacao_list]
+            )
             stmt = stmt.where(
-                ConcursoORM.regiao.in_([r.value for r in region_list]),
+                ConcursoORM.areas_atuacao.any(
+                    areas_conditions,
+                ),
+            )
+
+        if nome_q:
+            stmt = stmt.where(
+                ConcursoORM.nome.ilike(f"%{nome_q}%"),
             )
 
         concursos = await self.session.scalars(
             stmt.options(
-                selectinload(ConcursoORM.areas_atuacao),
                 selectinload(ConcursoORM.niveis_escolaridade),
+                selectinload(ConcursoORM.areas_atuacao),
             ).order_by(
                 ConcursoORM.regiao,
                 ConcursoORM.salario_max.desc().nulls_last(),

@@ -31,7 +31,12 @@ class ConcursoService(ABC):
         pass
 
     @abstractmethod
-    async def get_new_concursos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
+    async def get_new_concursos(
+        self,
+        region_list: list[PciConcursosRegion] | None,
+        area_atuacao_list: list[str] | None,
+        nome_q: str | None,
+    ) -> list[Concurso]:
         pass
 
     @abstractmethod
@@ -108,20 +113,37 @@ class PciConcursosService(ConcursoService):
         assert len(list_found) == 1
         return list_found[0]
 
-    async def get_new_concursos(self, region_list: list[PciConcursosRegion] | None) -> list[Concurso]:
+    async def get_new_concursos(
+        self,
+        region_list: list[PciConcursosRegion] | None,
+        area_atuacao_list: list[str] | None,
+        nome_q: str | None,
+    ) -> list[Concurso]:
         if not region_list:
             region_list = [PciConcursosRegion.TODOS]
 
+        if not area_atuacao_list:
+            area_atuacao_list = []
+
         region_values = ",".join([r.value for r in region_list])
+        area_atuacao_values = ",".join(area_atuacao_list)
         hashed_regions = md5(region_values.encode()).hexdigest()
-        cache_key = f"new:concursos:{hashed_regions}"
+        hashed_area_atuacao = md5(area_atuacao_values.encode()).hexdigest()
+
+        cache_key = f"concursos:{hashed_regions}:{hashed_area_atuacao}:{nome_q}"
 
         concursos = await self.cache.get(cache_key)
         if concursos:
             return concursos
 
-        concursos = await self.repository.get_added_today(region_list)
+        concursos = await self.repository.get_added_today(
+            region_list,
+            area_atuacao_list,
+            nome_q or "",
+        )
+
         await self.cache.set(cache_key, concursos, ex=60 * 5)
+
         return concursos
 
     async def re_scrape_concursos(self) -> list[Concurso]:

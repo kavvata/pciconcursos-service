@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/v1/concurso")
 async def get_concursos(
     service: t.Annotated[ConcursoService, Depends(concurso_service)],
     region: list[PciConcursosRegion] | None = Query([], description="Optionally set one or more regions to filter by"),  # noqa: B008
-    area_atuacao: list[str] | None = Query([], description="Optionally search for area atuacao"),
+    area_atuacao: list[str] | None = Query([], description="Optionally search for area atuacao"),  # noqa: B008
     nome: str | None = Query("", description="Optionally search by concurso nome"),
 ):
     return await service.get_concursos(region, area_atuacao, nome)
@@ -35,8 +35,14 @@ async def scrape_concursos(
 async def get_new_concursos(
     service: t.Annotated[ConcursoService, Depends(concurso_service)],
     region: list[PciConcursosRegion] | None = Query([], description="Optionally set one or more regions to filter by"),  # noqa: B008
+    area_atuacao: list[str] | None = Query([], description="Optionally search for area atuacao"),  # noqa: B008
+    nome: str | None = Query("", description="Optionally search by concurso nome"),
 ):
-    concursos = await service.get_new_concursos(region)
+    concursos = await service.get_new_concursos(
+        region,
+        area_atuacao,
+        nome,
+    )
     if not concursos:
         raise HTTPException(status_code=204, detail="Nenhum novo concurso encontrado.")
     return concursos
