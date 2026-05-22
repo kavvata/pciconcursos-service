@@ -17,21 +17,32 @@ class PciConcursosClient(ConcursoClient):
         self.link = link
         self.region_config = region_config
 
-    async def get_possible_areas_from_concurso_link(self, link: str) -> list[str]:
+    async def _build_detail_from_link(self, link: str) -> tuple[str | None, list[str]]:
         async with aiohttp.ClientSession() as session:
             async with session.get(link) as response:
-                soup = BeautifulSoup(await response.text(), "html.parser")
+                html = await response.text()
 
+        soup = BeautifulSoup(html, "html.parser")
+
+        edital_pdf_url = None
+        for li in soup.find_all("li", class_="pdf"):
+            a_tag = li.find("a", title=re.compile(r"edital", re.I))
+            if a_tag and a_tag.get("href"):
+                href = str(a_tag.get("href") or "")
+                if href.lower().endswith(".pdf"):
+                    edital_pdf_url = href
+                    break
+
+        possible_areas = []
         article_soup = soup.find(attrs={"itemprop": "articleBody"})
+        if article_soup:
+            possible_areas = [
+                re.sub(r"\s*\(.*\)\s*$", "", li.get_text(strip=True)).strip()
+                for ul in article_soup.find_all("ul")
+                for li in ul.find_all("li")
+            ]
 
-        if not article_soup:
-            return []
-
-        return [
-            re.sub(r"\s*\(.*\)\s*$", "", li.get_text(strip=True)).strip()
-            for ul in article_soup.find_all("ul")
-            for li in ul.find_all("li")
-        ]
+        return edital_pdf_url, possible_areas
 
     async def _get_edital_pdf_url_from_link(self, link: str) -> str | None:
         async with aiohttp.ClientSession() as session:
@@ -55,9 +66,9 @@ class PciConcursosClient(ConcursoClient):
             assert name_anchor
 
             name = name_anchor.text.strip()
-            link = name_anchor.get("href")
+            link = str(name_anchor.get("href"))
 
-            edital_pdf_url = await self._get_edital_pdf_url_from_link(str(link))
+            edital_pdf_url, extra_areas = await self._build_detail_from_link(link)
 
             cd_soup = line.find(class_="cd")
 
@@ -77,7 +88,7 @@ class PciConcursosClient(ConcursoClient):
             salario = "".join(re.findall(r"R\$ *\d*\.*\d*\,*\d*", cd_content))
 
             if "Vários Cargos" in area_atuacao_list:
-                area_atuacao_list = await self.get_possible_areas_from_concurso_link(str(link))
+                area_atuacao_list = extra_areas
 
             parent = line.parent
             assert parent
